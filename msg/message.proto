@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+message Message {
+    //
+    int32 length = 1;
+    //
+    string groupId = 2;
+    //
+    enum MessageType {
+        TEXT = 0;
+        IMAGE = 1;
+        VIDEO = 2;
+        AUDIO = 3;
+        SYSTEM = 4;
+    }
+    //
+    MessageType type = 3;
+    //
+    bytes body = 4;
+    //
+    int32 checksum = 5;
+}
