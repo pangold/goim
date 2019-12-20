@@ -8,8 +8,7 @@ type WsConfig struct {
 }
 
 type TcpConfig struct {
-	Addr     string
-	Port     int
+	Address  string
 }
 
 type Config struct {
@@ -24,16 +23,15 @@ var (
 
 func init() {
 	Conf = Config{
-		Protocol: "ws",
+		Protocol: "tcp",
 		Ws: WsConfig{
 			Protocol: "ws",
 			Address:  "0.0.0.0:10000",
 			CertFile: "",
-			KeyFile: "",
+			KeyFile:  "",
 		},
 		Tcp: TcpConfig{
-			Addr: "0.0.0.0",
-			Port: 10001,
+			Address:  "127.0.0.1:10001",
 		},
 	}
 }

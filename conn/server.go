@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/conn/interfaces"
+	"gitlab.com/pangold/goim/conn/tcp"
 	"gitlab.com/pangold/goim/conn/ws"
 )
 
@@ -18,7 +19,7 @@ type ChatServer struct {
 func NewChatServer(conf config.Config) *ChatServer {
 	chat := &ChatServer{nil, nil, nil, nil, nil}
 	if conf.Protocol == "tcp" {
-		//chat.s = tcp.NewTcpServer(conf.Tcp)
+		chat.server = tcp.NewTcpServer(conf.Tcp)
 	} else if conf.Protocol == "ws" {
 		chat.server = ws.NewWsServer(conf.Ws)
 	} else {

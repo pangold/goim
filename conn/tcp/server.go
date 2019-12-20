@@ -1,70 +1,43 @@
 package tcp
 
 import (
-	"gitlab.com/pangold/goim/conn/interfaces"
+	"gitlab.com/pangold/goim/conn/common"
 	"log"
 	"net"
 
-	"gitlab.com/im/config"
-	"gitlab.com/im/conn"
+	"gitlab.com/pangold/goim/conn/interfaces"
+	"gitlab.com/pangold/goim/config"
 )
 
 type Server struct {
-	conn.ConnectionPool
-	receivedHandler     *func([]byte, string) error
-	tokenHandler        *func(string) error
 	config               config.TcpConfig
-	register             chan *Conn
-	unregister           chan *Conn
+	pool                 interfaces.Pool
 }
 
 func NewTcpServer(c config.TcpConfig) *Server {
 	return &Server{
-		conn.ConnectionPool {
-			nil,
-			nil,
-			make(map[string]_interface.Connection),
-		},
-		nil,
-		nil,
-		c,
-		make(chan *Conn),
-		make(chan *Conn),
+		config: c,
+		pool:   common.NewPool(),
 	}
 }
 
-func (s *Server) SetReceivedHandler(handler func([]byte, string) error) {
-	s.receivedHandler = &handler
-}
-
-func (s *Server) SetTokenHandler(handler func(string) error) {
-	s.tokenHandler = &handler
+func (s *Server) GetPool() interfaces.Pool {
+	return s.pool
 }
 
 func (s *Server) Run() {
-	//
-	ipAddr, err := net.ResolveIPAddr("tcp", s.config.Addr)
+	go s.pool.HandleLoop()
+	tcpAddr, err := net.ResolveTCPAddr("tcp", s.config.Address)
 	if err != nil {
-		log.Fatalf("error: resolve ip address fail: %s\n", s.config.Addr)
+		log.Fatalf("error: failed to resolve ip address: tcp://%s", s.config.Address)
 		return
 	}
-	//
-	tcpAddr := &net.TCPAddr{
-		IP:   ipAddr.IP,
-		Port: s.config.Port,
-		Zone: ipAddr.Zone,
-	}
-	//
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
-		log.Fatalf("error: listen %s:%d failure. %s\n", s.config.Addr, s.config.Port, err)
+		log.Fatalf("error: failed to listen tcp://%s, %v", s.config.Address, err)
 		return
 	}
-	//
-	log.Printf("Tcp server start listening %s:%d", s.config.Addr, s.config.Port)
-	//
-	go s.handleConnection()
-	//
+	log.Printf("Tcp server start listening tcp://%s", s.config.Address)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -75,34 +48,15 @@ func (s *Server) Run() {
 	}
 }
 
-func (s *Server) handleConnection() {
-	for {
-		select {
-		case conn := <-s.register:
-			s.Connections[conn.token] = conn
-			if s.ConnectedHandler != nil {
-				(*s.ConnectedHandler)(conn.token)
-			}
-		case conn := <-s.unregister:
-			if _, ok := s.Connections[conn.token]; ok {
-				close(conn.send)
-				delete(s.Connections, conn.token)
-				if s.DisconnectedHandler != nil {
-					(*s.DisconnectedHandler)(conn.token)
-				}
-			}
-		}
-	}
-}
-
 func (s *Server) handleAccepted(c net.Conn) {
-	conn := &Conn {
-		conn:     c,
-		received: s.receivedHandler,
-		send:     make(chan []byte, 1024),
-		token:    "",
+	conn := &Connection{
+		pool:           s.pool,
+		conn:           c,
+		messageHandler: nil,
+		send:           make(chan []byte, 1024),
+		token:          "",
 	}
-	s.register <- conn
+	// s.pool.Register(conn) // when connection received token
 	go conn.sendLoop()
 	go conn.receiveLoop()
 }
