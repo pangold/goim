@@ -1,4 +1,4 @@
-package ws
+package websocket
 
 import (
 	"github.com/gorilla/websocket"
@@ -53,7 +53,7 @@ func (c *Connection) Send(message []byte) {
 	c.send <- message
 }
 
-func (c *Connection) SyncSend(message []byte) error {
+func (c *Connection) syncSend(message []byte) error {
 	w, err := c.conn.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (c *Connection) SyncSend(message []byte) error {
 	return nil
 }
 
-func (c *Connection) SyncSendHeartbeat() error {
+func (c *Connection) syncSendHeartbeat() error {
 	if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (c *Connection) SyncSendHeartbeat() error {
 	return nil
 }
 
-func (c *Connection) ReceiveHeartbeat(string) error {
+func (c *Connection) receiveHeartbeat(string) error {
 	if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		log.Fatalf("receive heartbeat error: %v", err)
 		return err
@@ -85,7 +85,7 @@ func (c *Connection) ReceiveHeartbeat(string) error {
 	return nil
 }
 
-func (c *Connection) DispatchMessage(msg []byte) {
+func (c *Connection) dispatchMessage(msg []byte) {
 	if c.messageHandler != nil {
 		if err := (*c.messageHandler)(msg, c.token); err != nil {
 			log.Fatalf("error: unexpected data")
@@ -93,7 +93,7 @@ func (c *Connection) DispatchMessage(msg []byte) {
 	}
 }
 
-func (c *Connection) SendLoop() {
+func (c *Connection) sendLoop() {
 	ticker := time.NewTicker(pingPeriod)
 	defer c.conn.Close()
 	defer ticker.Stop()
@@ -108,12 +108,12 @@ func (c *Connection) SendLoop() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			if err := c.SyncSend(message); err != nil {
+			if err := c.syncSend(message); err != nil {
 				log.Fatalf("sync send error: %v", err)
 				return
 			}
 		case <-ticker.C:
-			if err := c.SyncSendHeartbeat(); err != nil {
+			if err := c.syncSendHeartbeat(); err != nil {
 				log.Fatalf("sync send heartbeat error: %v", err)
 				return
 			}
@@ -122,10 +122,10 @@ func (c *Connection) SendLoop() {
 }
 
 // 处理被动关闭连接，如客户端关闭、或者其他错误
-func (c *Connection) ReceiveLoop() {
+func (c *Connection) receiveLoop() {
 	defer c.pool.Unregister(c)
 	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetPongHandler(c.ReceiveHeartbeat)
+	c.conn.SetPongHandler(c.receiveHeartbeat)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	for {
 		_, msg, err := c.conn.ReadMessage()
@@ -135,7 +135,7 @@ func (c *Connection) ReceiveLoop() {
 			}
 			return
 		}
-		c.DispatchMessage(msg)
+		c.dispatchMessage(msg)
 		c.Send(msg) // temp
 	}
 }

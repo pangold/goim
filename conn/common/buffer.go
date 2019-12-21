@@ -1,4 +1,4 @@
-package conn
+package common
 
 import (
 	"gitlab.com/pangold/goim/msg"

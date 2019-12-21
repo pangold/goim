@@ -59,6 +59,6 @@ func (s *Server) handleAccepted(c net.Conn) {
 		remaining:      nil,
 	}
 	// s.pool.Register(conn) // when connection received token
-	go conn.SendLoop()
-	go conn.ReceiveLoop()
+	go conn.sendLoop()
+	go conn.receiveLoop()
 }

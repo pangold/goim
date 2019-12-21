@@ -3,6 +3,7 @@ package tcp
 import (
 	"fmt"
 	"gitlab.com/pangold/goim/config"
+	"gitlab.com/pangold/goim/conn/common"
 	"log"
 	"net"
 	"time"
@@ -13,7 +14,7 @@ type Client struct {
 	config config.TcpConfig
 }
 
-func NewTcpConnection(conf config.TcpConfig) net.Conn {
+func newTcpConnection(conf config.TcpConfig) net.Conn {
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", conf.Address)
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
@@ -26,7 +27,7 @@ func NewTcpConnection(conf config.TcpConfig) net.Conn {
 func NewTcpClient(token string, conf config.TcpConfig) *Client {
 	client := &Client {
 		Connection: Connection {
-			conn:      NewTcpConnection(conf),
+			conn:      newTcpConnection(conf),
 			send:      make(chan []byte, 1024),
 			pool:      nil,
 			token:     token,
@@ -35,34 +36,28 @@ func NewTcpClient(token string, conf config.TcpConfig) *Client {
 		},
 		config: conf,
 	}
-	client.SendToken(token)
-	go client.SendLoop()
-	go client.ReceiveLoop()
+	client.Send(common.NewTokenMessage([]byte(token)).Serialize())
+	go client.sendLoop()
+	go client.receiveLoop()
 	return client
-}
-
-func (c *Client) SendToken(token string) {
-	c.Send(NewTokenMessage([]byte(token)).Serialize())
 }
 
 func (c *Client) SendMessage(message string) {
 	c.Send([]byte(message))
 }
 
-// override
-func (c *Client) DispatchMessage(message []byte) {
+func (c *Client) handleMessage(message []byte) {
 	c.remaining = append(c.remaining, message...)
-	m, count := NewInternalMessage().Deserialize(c.remaining)
+	m, count := common.NewInternalMessage().Deserialize(c.remaining)
 	if m != nil {
-		c.HandleInternalMessage(m)
+		c.handleInternalMessage(m)
 		c.remaining = c.remaining[count:]
 	}
 	fmt.Println(string(c.remaining))
 	c.remaining = nil
 }
 
-// override
-func (c *Client) ReceiveLoop() {
+func (c *Client) receiveLoop() {
 	defer c.Stop()
 	for {
 		msg := make([]byte, maxMessageSize)
@@ -74,6 +69,6 @@ func (c *Client) ReceiveLoop() {
 			// log.Println("tcp read error: ", err.Error())
 			return
 		}
-		c.DispatchMessage(msg)
+		c.handleMessage(msg)
 	}
 }

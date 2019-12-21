@@ -1,4 +1,4 @@
-package ws
+package websocket
 
 import (
 	"errors"
@@ -83,8 +83,8 @@ func (s *Server) handleWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.pool.Register(conn)
-	go conn.SendLoop()
-	go conn.ReceiveLoop()
+	go conn.sendLoop()
+	go conn.receiveLoop()
 }
 
 func (s Server) checkToken(query map[string][]string) (string, error) {

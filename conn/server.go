@@ -5,7 +5,7 @@ import (
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"gitlab.com/pangold/goim/conn/tcp"
-	"gitlab.com/pangold/goim/conn/ws"
+	"gitlab.com/pangold/goim/conn/websocket"
 )
 
 type ChatServer struct {
@@ -16,12 +16,13 @@ type ChatServer struct {
 	tokenHandler        *func(string) error
 }
 
+// 
 func NewChatServer(conf config.Config) *ChatServer {
 	chat := &ChatServer{nil, nil, nil, nil, nil}
 	if conf.Protocol == "tcp" {
 		chat.server = tcp.NewTcpServer(conf.Tcp)
 	} else if conf.Protocol == "ws" {
-		chat.server = ws.NewWsServer(conf.Ws)
+		chat.server = websocket.NewWsServer(conf.Ws)
 	} else {
 		panic("unsupported protocol")
 	}
@@ -51,7 +52,7 @@ func (c *ChatServer) SetDisconnectedHandler(handler func(string)) {
 	c.server.GetPool().SetDisconnectedHandler(c.handleDisconnection)
 }
 
-func (c *ChatServer) handleConnection(connection interfaces.Connection) error {
+func (c *ChatServer) handleConnection(connection interfaces.Conn) error {
 	token := connection.GetToken()
 	if c.tokenHandler != nil && len(token) > 0 {
 		// check if it is valid token
@@ -68,7 +69,7 @@ func (c *ChatServer) handleConnection(connection interfaces.Connection) error {
 
 // remember: don't try to call Send or Receive relatives function here,
 // maybe it's been closed. that's a risk.
-func (c *ChatServer) handleDisconnection(connection interfaces.Connection) error {
+func (c *ChatServer) handleDisconnection(connection interfaces.Conn) error {
 	if c.disconnectedHandler != nil {
 		(*c.disconnectedHandler)(connection.GetToken())
 	}

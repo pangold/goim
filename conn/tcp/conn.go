@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"errors"
+	"gitlab.com/pangold/goim/conn/common"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"log"
 	"net"
@@ -58,7 +59,7 @@ func (c *Connection) Send(message []byte) {
 	}
 }
 
-func (c *Connection) SendLoop() {
+func (c *Connection) sendLoop() {
 	ticker := time.NewTicker(pingPeriod * 10)
 	defer c.conn.Close()
 	defer ticker.Stop()
@@ -70,7 +71,7 @@ func (c *Connection) SendLoop() {
 				return
 			}
 			if !ok {
-				c.conn.Write(NewGoodbyeMessage().Serialize())
+				c.conn.Write(common.NewGoodbyeMessage().Serialize())
 				// log.Printf("tcp connection say goodbye")
 				return
 			}
@@ -79,7 +80,7 @@ func (c *Connection) SendLoop() {
 				return
 			}
 		case <-ticker.C:
-			if _, err := c.conn.Write(NewHeartbeatMessage().Serialize()); err != nil {
+			if _, err := c.conn.Write(common.NewHeartbeatMessage().Serialize()); err != nil {
 				// log.Printf("tcp send hearbeat error: %v", err)
 				return
 			}
@@ -87,29 +88,29 @@ func (c *Connection) SendLoop() {
 	}
 }
 
-func (c *Connection) HandleInternalMessage(m *InternalMessage) {
-	switch m.kind {
-	case HEARTBEAT:
+func (c *Connection) handleInternalMessage(m *common.InternalMessage) {
+	switch m.Kind {
+	case common.HEARTBEAT:
 		// ReceiveLoop has PongWait detection
 		log.Println("heart beat.")
-	case GOODBYE:
+	case common.GOODBYE:
 		log.Println("client say goodbye")
-	case TOKEN:
+	case common.TOKEN:
 		if c.token == "" {
-			c.token = string(m.body)
+			c.token = string(m.Body)
 			c.pool.Register(c)
 		} else {
-			log.Printf("error: unexpected token request, original: %s, now: %s", c.token, string(m.body))
+			log.Printf("error: unexpected token request, original: %s, now: %s", c.token, string(m.Body))
 		}
 	}
 }
 
 // callback message(normal message)
-func (c *Connection) DispatchMessage(msg []byte) error {
+func (c *Connection) handleMessage(msg []byte) error {
 	c.remaining = append(c.remaining, msg...)
-	m, count := NewInternalMessage().Deserialize(c.remaining)
+	m, count := common.NewInternalMessage().Deserialize(c.remaining)
 	if m != nil {
-		c.HandleInternalMessage(m)
+		c.handleInternalMessage(m)
 		c.remaining = c.remaining[count:]
 	}
 	// token must be requested at the first time.
@@ -129,7 +130,7 @@ func (c *Connection) DispatchMessage(msg []byte) error {
 	return nil
 }
 
-func (c *Connection) ReceiveLoop() {
+func (c *Connection) receiveLoop() {
 	defer c.pool.Unregister(c)
 	for {
 		msg := make([]byte, maxMessageSize)
@@ -141,7 +142,7 @@ func (c *Connection) ReceiveLoop() {
 			// log.Printf("tcp read error: %v", err)
 			return
 		}
-		if err := c.DispatchMessage(msg); err != nil {
+		if err := c.handleMessage(msg); err != nil {
 			log.Printf("tcp read dispatch error: %v", err)
 			return
 		}

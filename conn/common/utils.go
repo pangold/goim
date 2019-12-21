@@ -1,4 +1,4 @@
-package tcp
+package common
 
 import (
 	"encoding/binary"

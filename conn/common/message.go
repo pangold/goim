@@ -1,4 +1,4 @@
-package tcp
+package common
 
 // Extra work for TCP
 
@@ -18,11 +18,11 @@ var (
 )
 
 type InternalMessage struct {
-	magic    uint32
-	kind     uint8 // Heartbeat, Goodbye, or Token message
-	size     uint8
-	body     []byte
-	checksum uint32
+	Magic    uint32
+	Kind     uint8 // Heartbeat, Goodbye, or Token message
+	Size     uint8
+	Body     []byte
+	Checksum uint32
 }
 
 func NewInternalMessage() *InternalMessage {
@@ -31,17 +31,17 @@ func NewInternalMessage() *InternalMessage {
 
 func NewHeartbeatMessage() *InternalMessage {
 	return &InternalMessage{
-		magic: MAGIC,
-		kind:  HEARTBEAT,
-		size:  0,
+		Magic: MAGIC,
+		Kind:  HEARTBEAT,
+		Size:  0,
 	}
 }
 
 func NewGoodbyeMessage() *InternalMessage {
 	return &InternalMessage{
-		magic: MAGIC,
-		kind:  GOODBYE,
-		size:  0,
+		Magic: MAGIC,
+		Kind:  GOODBYE,
+		Size:  0,
 	}
 }
 
@@ -51,10 +51,10 @@ func NewTokenMessage(token []byte) *InternalMessage {
 		panic("invalid token size")
 	}
 	return &InternalMessage{
-		magic: MAGIC,
-		kind:  TOKEN,
-		size:  uint8(len(token)),
-		body:  token,
+		Magic: MAGIC,
+		Kind:  TOKEN,
+		Size:  uint8(len(token)),
+		Body:  token,
 	}
 }
 
@@ -62,21 +62,21 @@ func (m *InternalMessage) Deserialize(data []byte) (*InternalMessage, int) {
 	if len(data) < 6 {
 		return nil, 0
 	}
-	m.magic = FromBytes(data[: 4]).(uint32)
-	if m.magic != MAGIC {
+	m.Magic = FromBytes(data[: 4]).(uint32)
+	if m.Magic != MAGIC {
 		return nil, 0
 	}
-	m.kind = data[4]
-	m.size = data[5]
-	next := 6 + m.size
+	m.Kind = data[4]
+	m.Size = data[5]
+	next := 6 + m.Size
 	if len(data) < int(next + 4) {
 		return nil, 0
 	}
-	if m.size > 0 {
-		m.body = data[6 : next]
+	if m.Size > 0 {
+		m.Body = data[6 : next]
 	}
-	m.checksum = FromBytes(data[next : next + 4]).(uint32)
-	if crc32.Checksum(data[: next], table32) != m.checksum {
+	m.Checksum = FromBytes(data[next : next + 4]).(uint32)
+	if crc32.Checksum(data[: next], table32) != m.Checksum {
 		return nil, 0
 	}
  	return m, int(next) + 4
@@ -84,13 +84,13 @@ func (m *InternalMessage) Deserialize(data []byte) (*InternalMessage, int) {
 
 func (m *InternalMessage) Serialize() []byte {
 	buf := make([]byte, 0)
-	buf = append(buf, ToBytes(m.magic)...)
-	buf = append(buf, m.kind)
-	buf = append(buf, m.size)
-	if m.size > 0 {
-		buf = append(buf, m.body...)
+	buf = append(buf, ToBytes(m.Magic)...)
+	buf = append(buf, m.Kind)
+	buf = append(buf, m.Size)
+	if m.Size > 0 {
+		buf = append(buf, m.Body...)
 	}
-	m.checksum = crc32.Checksum(buf, table32)
-	buf = append(buf, ToBytes(m.checksum)...)
+	m.Checksum = crc32.Checksum(buf, table32)
+	buf = append(buf, ToBytes(m.Checksum)...)
 	return buf
 }
