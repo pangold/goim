@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	"github.com/gorilla/websocket"
+	"errors"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"log"
 	"net"
@@ -34,9 +34,6 @@ func (c *Connection) SetMessageHandler(handler *func([]byte, string) error) {
 	c.messageHandler = handler
 }
 
-func (c *Connection) SetTokenHandler(handler *func(string) error) {
-}
-
 func (c *Connection) Stop() {
 	// not close directly. but close by SendLoop when exit loop
 	if !c.stopped {
@@ -45,62 +42,23 @@ func (c *Connection) Stop() {
 	}
 }
 
+func (c *Connection) Close() {
+	if err := c.conn.Close(); err != nil {
+		log.Printf("tcp connection close error: %v", err)
+	}
+}
+
 func (c *Connection) GetToken() string {
 	return c.token
 }
 
 func (c *Connection) Send(message []byte) {
-	c.send <- message
-}
-
-// tcp send ping message
-func (c *Connection) sendHeartbeat() error {
-	//c.send <- SerializeHeartbeatMessage()
-	return nil
-}
-
-func (c *Connection) handleInternalMessage(m *InternalMessage) {
-	switch m.kind {
-	case HEARTBEAT:
-		// ReceiveLoop has PongWait detection
-	case GOODBYE:
-		log.Println("say goodbye")
-	case TOKEN:
-		if len(c.token) == 0 {
-			c.token = string(m.body)
-			c.pool.Register(c)
-		} else {
-			log.Fatalf("error: unexpected token request, original: %s, now: %s", c.token, string(m.body))
-		}
+	if !c.stopped {
+		c.send <- message
 	}
 }
 
-// callback message(normal message)
-func (c *Connection) dispatchMessage(msg []byte) {
-	// TODO: what if bytes remaining?
-	// FIXME: Is here something wrong?
-	msg = append(c.remaining, msg...)
-	m, count := DeserializeInternalMessage(msg)
-	if m != nil {
-		c.handleInternalMessage(m)
-		c.remaining = msg[count:]
-	} else if len(c.token) == 0 {
-		// no token, no requests will be rightful.
-		c.Stop()
-		log.Fatalf("error: unauthorized request")
-	} else if c.messageHandler != nil {
-		if err := (*c.messageHandler)(msg, c.token); err != nil {
-			log.Fatalf("error: unexpected data")
-		}
-		c.remaining = msg[len(msg):]
-	} else {
-		log.Println(string(msg))
-		c.remaining = msg[len(msg):]
-	}
-}
-
-// 3 extra types of message: Heartbeat, Goodbye, Token
-func (c *Connection) sendLoop() {
+func (c *Connection) SendLoop() {
 	ticker := time.NewTicker(pingPeriod * 10)
 	defer c.conn.Close()
 	defer ticker.Stop()
@@ -108,36 +66,85 @@ func (c *Connection) sendLoop() {
 		select {
 		case message, ok := <-c.send:
 			if err := c.conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				// log.Printf("write error: timeout")
 				return
 			}
 			if !ok {
-				c.conn.Write(SerializeGoodbyeMessage())
+				c.conn.Write(NewGoodbyeMessage().Serialize())
+				// log.Printf("tcp connection say goodbye")
 				return
 			}
 			if _, err := c.conn.Write(message); err != nil {
+				// log.Printf("tcp write error: %v", err)
 				return
 			}
 		case <-ticker.C:
-			if err := c.sendHeartbeat(); err != nil {
+			if _, err := c.conn.Write(NewHeartbeatMessage().Serialize()); err != nil {
+				// log.Printf("tcp send hearbeat error: %v", err)
 				return
 			}
 		}
 	}
 }
 
-func (c *Connection) receiveLoop() {
+func (c *Connection) HandleInternalMessage(m *InternalMessage) {
+	switch m.kind {
+	case HEARTBEAT:
+		// ReceiveLoop has PongWait detection
+		log.Println("heart beat.")
+	case GOODBYE:
+		log.Println("client say goodbye")
+	case TOKEN:
+		if c.token == "" {
+			c.token = string(m.body)
+			c.pool.Register(c)
+		} else {
+			log.Printf("error: unexpected token request, original: %s, now: %s", c.token, string(m.body))
+		}
+	}
+}
+
+// callback message(normal message)
+func (c *Connection) DispatchMessage(msg []byte) error {
+	c.remaining = append(c.remaining, msg...)
+	m, count := NewInternalMessage().Deserialize(c.remaining)
+	if m != nil {
+		c.HandleInternalMessage(m)
+		c.remaining = c.remaining[count:]
+	}
+	// token must be requested at the first time.
+	if c.token == "" {
+		// no token, no requests will be rightful.
+		return errors.New("unauthorized request")
+	}
+	// message callback handler for invokers
+	if c.messageHandler != nil {
+		if err := (*c.messageHandler)(c.remaining, c.token); err != nil {
+			return errors.New("unexpected data")
+		}
+	}
+	// FIXME: with echo reply, receive loop would not exit.
+	// c.Send(c.remaining) // temp
+	c.remaining = nil
+	return nil
+}
+
+func (c *Connection) ReceiveLoop() {
 	defer c.pool.Unregister(c)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	for {
 		msg := make([]byte, maxMessageSize)
-		if _, err := c.conn.Read(msg); err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-				log.Fatalf("error: %v", err)
-			}
-			break
+		if err := c.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			// log.Printf("tcp read error: %v", err)
+			return
 		}
-		c.dispatchMessage(msg)
-		c.Send(msg) // temp
+		if _, err := c.conn.Read(msg); err != nil {
+			// log.Printf("tcp read error: %v", err)
+			return
+		}
+		if err := c.DispatchMessage(msg); err != nil {
+			log.Printf("tcp read dispatch error: %v", err)
+			return
+		}
 	}
 }
 

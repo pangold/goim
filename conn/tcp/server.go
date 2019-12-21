@@ -55,8 +55,10 @@ func (s *Server) handleAccepted(c net.Conn) {
 		messageHandler: nil,
 		send:           make(chan []byte, 1024),
 		token:          "",
+		stopped:        false,
+		remaining:      nil,
 	}
 	// s.pool.Register(conn) // when connection received token
-	go conn.sendLoop()
-	go conn.receiveLoop()
+	go conn.SendLoop()
+	go conn.ReceiveLoop()
 }

@@ -31,15 +31,17 @@ func (c *Connection) SetMessageHandler(handler *func([]byte, string) error) {
 	c.messageHandler = handler
 }
 
-func (c *Connection) SetTokenHandler(handler *func(string) error) {
-	// ws doesn't need token handler, but tcp does
-}
-
 func (c *Connection) Stop() {
 	// not close directly. but close by SendLoop when exit loop
 	if !c.stopped {
 		close(c.send)
 		c.stopped = true
+	}
+}
+
+func (c *Connection) Close() {
+	if err := c.conn.Close(); err != nil {
+		log.Printf("ws connection close error: %v", err)
 	}
 }
 

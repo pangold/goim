@@ -5,7 +5,6 @@ type Connection interface {
 	Stop()
 	Send([]byte)
 	SetMessageHandler(*func([]byte, string) error)
-	SetTokenHandler(*func(string) error)
 }
 
 type Pool interface {

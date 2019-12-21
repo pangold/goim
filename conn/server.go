@@ -52,8 +52,6 @@ func (c *ChatServer) SetDisconnectedHandler(handler func(string)) {
 }
 
 func (c *ChatServer) handleConnection(connection interfaces.Connection) error {
-	// when connected, ws has token, but tcp doesn't have
-	// think about how to deal with it.
 	token := connection.GetToken()
 	if c.tokenHandler != nil && len(token) > 0 {
 		// check if it is valid token
@@ -64,7 +62,6 @@ func (c *ChatServer) handleConnection(connection interfaces.Connection) error {
 	if len(token) > 0 && c.connectedHandler != nil {
 		(*c.connectedHandler)(token)
 	}
-	connection.SetTokenHandler(c.tokenHandler) // tcp needs
 	connection.SetMessageHandler(c.messageHandler)
 	return nil
 }

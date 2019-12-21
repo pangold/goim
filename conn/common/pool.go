@@ -56,19 +56,16 @@ func (p *Pool) NewConnection(conn interfaces.Connection) {
 	if p.connectedHandler != nil {
 		// check if it is valid connection(actually, check for token)
 		if err := (*p.connectedHandler)(conn); err != nil {
-			log.Fatalln(err.Error())
-		} else {
-			p.connections[conn.GetToken()] = conn
-			log.Println("new connection, count: ", len(p.connections))
+			log.Println("failed to verify, ", err.Error())
+			return
 		}
-	} else {
-		p.connections[conn.GetToken()] = conn
-		log.Println("new connection, count: ", len(p.connections))
 	}
+	p.connections[conn.GetToken()] = conn
+	log.Println("new connection, token:", conn.GetToken())
 }
 
 func (p *Pool) LostConnection(conn interfaces.Connection) {
-	log.Println("lost connection, token: ", conn.GetToken())
+	log.Println("lost connection, token:", conn.GetToken())
 	delete(p.connections, conn.GetToken())
 	if p.connectedHandler != nil {
 		(*p.connectedHandler)(conn)
