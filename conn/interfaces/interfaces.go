@@ -60,7 +60,4 @@ type Pool interface {
 type Server interface {
 	// Manage a loop handling with all behaviors of connections.
 	Run()
-	// Get connection pool.
-	// Basically for communication with connections.
-	GetPool() Pool
 }

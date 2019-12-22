@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/gorilla/websocket"
 	"gitlab.com/pangold/goim/config"
-	"gitlab.com/pangold/goim/conn/common"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"log"
 	"net/http"
@@ -26,16 +25,12 @@ func UseUpgrader(r, w int) websocket.Upgrader {
 	}
 }
 
-func NewWsServer(c config.WsConfig) *Server {
+func NewWsServer(p interfaces.Pool, c config.WsConfig) *Server {
 	return &Server{
 		upgrader:        UseUpgrader(1024, 1024),
 		config:          c,
-		pool:            common.NewPool(),
+		pool:            p,
 	}
-}
-
-func (s *Server) GetPool() interfaces.Pool {
-	return s.pool
 }
 
 func (s *Server) Run() {
@@ -43,7 +38,7 @@ func (s *Server) Run() {
 	//
 	serverMux := http.NewServeMux()
 	serverMux.HandleFunc("/ws", s.handleWs)
-	log.Printf("Websocket server start running with socket protocol: %s, listen: %s", s.config.Protocol, s.config.Address)
+	log.Printf("Websocket server start running with socket protocol: %s, serving: %s", s.config.Protocol, s.config.Address)
 	//
 	if s.config.Protocol == "wss" {
 		if err := http.ListenAndServeTLS(s.config.Address, s.config.CertFile, s.config.KeyFile, serverMux); err != nil {

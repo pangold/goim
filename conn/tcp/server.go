@@ -1,12 +1,11 @@
 package tcp
 
 import (
-	"gitlab.com/pangold/goim/conn/common"
 	"log"
 	"net"
 
-	"gitlab.com/pangold/goim/conn/interfaces"
 	"gitlab.com/pangold/goim/config"
+	"gitlab.com/pangold/goim/conn/interfaces"
 )
 
 type Server struct {
@@ -14,15 +13,11 @@ type Server struct {
 	pool                 interfaces.Pool
 }
 
-func NewTcpServer(c config.TcpConfig) *Server {
+func NewTcpServer(p interfaces.Pool, c config.TcpConfig) *Server {
 	return &Server{
 		config: c,
-		pool:   common.NewPool(),
+		pool:   p,
 	}
-}
-
-func (s *Server) GetPool() interfaces.Pool {
-	return s.pool
 }
 
 func (s *Server) Run() {

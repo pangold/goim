@@ -8,6 +8,6 @@ import (
 
 func main() {
 	log.Println("IM service start running ...")
-	s := conn.NewChatServer(config.Conf)
+	s := conn.NewServer(config.Conf)
 	s.Run()
 }
