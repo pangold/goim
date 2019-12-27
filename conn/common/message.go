@@ -3,6 +3,7 @@ package common
 // Extra work for TCP
 
 import (
+	"gitlab.com/pangold/goim/utils"
 	"hash/crc32"
 )
 
@@ -62,7 +63,7 @@ func (m *InternalMessage) Deserialize(data []byte) (*InternalMessage, int) {
 	if len(data) < 6 {
 		return nil, 0
 	}
-	m.Magic = FromBytes(data[: 4]).(uint32)
+	m.Magic = utils.FromBytes(data[: 4]).(uint32)
 	if m.Magic != MAGIC {
 		return nil, 0
 	}
@@ -75,7 +76,7 @@ func (m *InternalMessage) Deserialize(data []byte) (*InternalMessage, int) {
 	if m.Size > 0 {
 		m.Body = data[6 : next]
 	}
-	m.Checksum = FromBytes(data[next : next + 4]).(uint32)
+	m.Checksum = utils.FromBytes(data[next : next + 4]).(uint32)
 	if crc32.Checksum(data[: next], table32) != m.Checksum {
 		return nil, 0
 	}
@@ -84,13 +85,13 @@ func (m *InternalMessage) Deserialize(data []byte) (*InternalMessage, int) {
 
 func (m *InternalMessage) Serialize() []byte {
 	buf := make([]byte, 0)
-	buf = append(buf, ToBytes(m.Magic)...)
+	buf = append(buf, utils.ToBytes(m.Magic)...)
 	buf = append(buf, m.Kind)
 	buf = append(buf, m.Size)
 	if m.Size > 0 {
 		buf = append(buf, m.Body...)
 	}
 	m.Checksum = crc32.Checksum(buf, table32)
-	buf = append(buf, ToBytes(m.Checksum)...)
+	buf = append(buf, utils.ToBytes(m.Checksum)...)
 	return buf
 }

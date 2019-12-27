@@ -12,6 +12,8 @@ else
   output="$1"
 fi
 
+# compile protobuf files
+
 # compile
 if test "$2" = "linux"; then
   echo "compiling linux binary ..."

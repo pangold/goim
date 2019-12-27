@@ -1,0 +1,43 @@
+syntax = "proto2";
+
+message Segment {
+    required int64 id          = 1; // One message one id, even though a message's been splited into packages
+    required int32 index       = 2;
+    required int32 total       = 3;
+    optional int32 ack         = 4; // bool
+    optional bytes body        = 5; // Message.Marshal()
+    // required uint32 checksum   = 6; // Zero
+}
+
+message Message {
+    required string userId     = 1; // message from (peer)
+    optional string targetId   = 2; // message to (peer)
+    optional string groupId    = 3; // message to (group)
+    enum MessageType {
+        TEXT     = 0;
+        IMAGE    = 1;
+        VIDEO    = 2;
+        AUDIO    = 3;
+        SYSTEM   = 4;
+        FILE     = 5;
+    }
+    required MessageType type  = 4 [default = TEXT];
+    enum AckType {
+        NONE     = 0;
+        RECEIVED = 1; // neccessary
+        READ     = 2;
+    }
+    required AckType ack       = 5 [default = RECEIVED];
+    optional bytes body        = 6; // size of body, may be huge
+    required int64 time        = 7; //
+}
+
+message Body {
+    required int32 index       = 1;
+    required int32 total       = 2;
+    required bytes body        = 3;
+}
+
+// Solution1: Segment and Message  --> Segment.body = Message.Marshal()
+// Solution2: Message and Body     --> Message.Body = Body.Marshal()
+// I don't want to choose, implement both.
