@@ -19,6 +19,7 @@ func TestProtobuf_ReceivedData(t *testing.T) {
 	}
 
 	msg := &message.Message{
+		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
 		GroupId:              nil,
@@ -26,7 +27,6 @@ func TestProtobuf_ReceivedData(t *testing.T) {
 		Ack:                  (*message.Message_AckType)(proto.Int32(int32(message.Message_NONE))),
 		// Body:                 body(3000000),
 		Body:                 body(200000000),
-		Time:                 proto.Int64(time.Now().Unix() >> 1),
 	}
 
 	p := NewMessage()

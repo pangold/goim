@@ -10,9 +10,10 @@ message Segment {
 }
 
 message Message {
-    required string userId     = 1; // message from (peer)
-    optional string targetId   = 2; // message to (peer)
-    optional string groupId    = 3; // message to (group)
+    required int64 id          = 1; //
+    required string userId     = 2; // message from (peer)
+    optional string targetId   = 3; // message to (peer)
+    optional string groupId    = 4; // message to (group)
     enum MessageType {
         TEXT     = 0;
         IMAGE    = 1;
@@ -21,15 +22,14 @@ message Message {
         SYSTEM   = 4;
         FILE     = 5;
     }
-    optional MessageType type  = 4 [default = TEXT];
+    optional MessageType type  = 5 [default = TEXT];
     enum AckType {
         NONE     = 0;
         RECEIVED = 1; // neccessary
         READ     = 2;
     }
-    optional AckType ack       = 5 [default = RECEIVED];
-    optional bytes body        = 6; // size of body, may be huge
-    required int64 time        = 7; //
+    optional AckType ack       = 6 [default = RECEIVED];
+    optional bytes body        = 7; // size of body, may be huge
 }
 
 message Body {

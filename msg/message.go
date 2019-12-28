@@ -2,38 +2,75 @@ package msg
 
 import (
 	"gitlab.com/pangold/goim/msg/impl"
-	"gitlab.com/pangold/goim/msg/interfaces"
 	message "gitlab.com/pangold/goim/msg/protobuf"
 )
 
 type Message struct {
-	msg interfaces.Message
+	msg            *impl.Message
+	ackHandler     func(*MessageT)
+	messageHandler func(*MessageT)
 }
 
 func NewMessage() *Message {
-	return &Message {
+	m := &Message {
 		msg: impl.NewMessage(),
 	}
+	m.msg.SetAckHandler(m.handleAck)
+	m.msg.SetMessageHandler(m.handleMessage)
+	return m
 }
 
-func (p *Message) SetSplitHandler(h func([]byte)) {
-	p.msg.SetSplitHandler(h)
+func (m *Message) SetSplitHandler(h func([]byte)) {
+	m.msg.SetSplitHandler(h)
 }
 
-func (p *Message) SetMessageHandler(h func(*message.Message)) {
-	// TODO handle here, and convert to another type
-	p.msg.SetMessageHandler(h)
+func (m *Message) SetMessageHandler(h func(*MessageT)) {
+	m.messageHandler = h
 }
 
-func (p *Message) SetAckHandler(h func(*message.Message)) {
-	p.msg.SetAckHandler(h)
+func (m *Message) SetAckHandler(h func(*MessageT)) {
+	m.ackHandler = h
 }
 
-func (p *Message) Split(msg *message.Message) error {
-	return p.msg.Split(msg)
+func (m *Message) Merge(data []byte) int {
+	return m.msg.Merge(data)
 }
 
-func (p *Message) Merge(data []byte) int {
-	return p.msg.Merge(data)
+func (m *Message) Split(msg *MessageT) error {
+	mm := &message.Message {
+		Id:       &msg.Id,
+		UserId:   &msg.UserId,
+		TargetId: &msg.TargetId,
+		GroupId:  &msg.GroupId,
+		Type:     (*message.Message_MessageType)(&msg.Type),
+		Ack:      (*message.Message_AckType)(&msg.Ack),
+		Body:     msg.Body,
+	}
+	return m.msg.Split(mm)
 }
 
+func (m *Message) handleAck(msg *message.Message) {
+	mm := &MessageT {
+		Id:       msg.GetId(),
+		UserId:   msg.GetUserId(),
+		TargetId: msg.GetTargetId(),
+		GroupId:  msg.GetGroupId(),
+		Type:     int32(msg.GetType()),
+		Ack:      int32(msg.GetAck()),
+		Body:     msg.Body,
+	}
+	m.ackHandler(mm)
+}
+
+func (m *Message) handleMessage(msg *message.Message) {
+	mm := &MessageT {
+		Id:       msg.GetId(),
+		UserId:   msg.GetUserId(),
+		TargetId: msg.GetTargetId(),
+		GroupId:  msg.GetGroupId(),
+		Type:     int32(msg.GetType()),
+		Ack:      int32(msg.GetAck()),
+		Body:     msg.Body,
+	}
+	m.messageHandler(mm)
+}

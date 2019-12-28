@@ -20,13 +20,13 @@ func TestSplitter_Send(t *testing.T) {
 	}
 
 	msg := &message.Message{
+		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
 		GroupId:              nil,
 		Type:                 (*message.Message_MessageType)(proto.Int32(int32(message.Message_TEXT))),
 		Ack:                  (*message.Message_AckType)(proto.Int32(int32(message.Message_NONE))),
 		Body:                 body(1200),
-		Time:                 proto.Int64(time.Now().Unix() >> 1),
 	}
 
 	handle := func(seg *message.Segment) {
@@ -48,6 +48,7 @@ func TestSplitter_Send(t *testing.T) {
 	}
 	time.Sleep(time.Millisecond * 1000)
 	//msg.
+	msg.Id = proto.Int64(time.Now().UnixNano())
 	if err := s.Send(msg); err != nil {
 		t.Error(err)
 	}

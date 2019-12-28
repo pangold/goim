@@ -56,10 +56,8 @@ func (s *Splitter) SetAckSegment(seg *message.Segment) error {
 
 func (s *Splitter) Send(msg *message.Message) error {
 	ack := &acknowledge{}
-	// generate msg id: simply using Unix Time as id
-	// very moment, only one message for one client
-	// FIXME: second level....
-	ack.id = time.Now().Unix()
+	//
+	ack.id = msg.GetId()
 	s.acks[ack.id] = ack
 	// split will trigger segment callback
 	if err := s.split(ack, msg); err != nil {
