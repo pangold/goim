@@ -21,13 +21,13 @@ message Message {
         SYSTEM   = 4;
         FILE     = 5;
     }
-    required MessageType type  = 4 [default = TEXT];
+    optional MessageType type  = 4 [default = TEXT];
     enum AckType {
         NONE     = 0;
         RECEIVED = 1; // neccessary
         READ     = 2;
     }
-    required AckType ack       = 5 [default = RECEIVED];
+    optional AckType ack       = 5 [default = RECEIVED];
     optional bytes body        = 6; // size of body, may be huge
     required int64 time        = 7; //
 }

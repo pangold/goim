@@ -17,6 +17,10 @@ type Package struct {
 	checksum uint32
 }
 
+func NewEmptyPackage() *Package {
+	return &Package{}
+}
+
 func NewPackage(body []byte) *Package {
 	return &Package {
 		size:     uint16(len(body)),
