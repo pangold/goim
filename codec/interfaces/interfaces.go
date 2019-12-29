@@ -1,44 +1,42 @@
 package interfaces
 
 import (
-	message "gitlab.com/pangold/goim/msg/protobuf"
+	message "gitlab.com/pangold/goim/codec/protobuf"
 )
 
-// It's a message
+// It's a message encoder & decoder
 // Parse from []byte to segment,
-// and callback
+// and callback message
 // Use after any bytes received
-type Message interface {
+type Codec interface {
 	// Received bytes of data,
 	// Pushing into here, and merge
-	Merge([]byte) int
+	Encode([]byte) int
 	// Before sending message, split into segments
-	Split(msg *message.Message) error
+	Decode(msg *message.Message) error
 	// Callback segment, and ready to send
-	SetSplitHandler(func([]byte))
+	SetEncodeHandler(func([]byte))
 	// Callback a received message
-	SetMessageHandler(func(*message.Message))
-	// Callback a ack message
-	SetAckHandler(func(*message.Message))
+	SetDecodeHandler(func(*message.Message))
+	// Enable resend if timeout
+	EnableResend(bool)
 }
 
 // It's a received segment pool
 // Combine segments to message,
 // and callback till a complete message or reply.
 // Use after a segment received
-type Merger interface {
+type Decoder interface {
 	// Received a segment,
 	// Pushing into here, and merge
 	Push(*message.Segment)
 	// Callback the complete message
 	SetMessageHandler(func(m *message.Message))
-	// Message acknowledge
-	SetAckHandler(func(m *message.Message))
 }
 
 // Split into segments if message is too large.
 // Use before sending them out,
-type Splitter interface {
+type Encoder interface {
 	// a fake send function,
 	// it's real purpose is split into segments if message is too large
 	Send(*message.Message)

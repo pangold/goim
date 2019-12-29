@@ -1,4 +1,4 @@
-package msg
+package codec
 
 import "time"
 
@@ -20,8 +20,9 @@ type MessageT struct {
 	UserId   string
 	TargetId string
 	GroupId  string
-	Type     int32
+	Action   int32
 	Ack      int32
+	Type     int32
 	Body     []byte
 }
 
@@ -30,8 +31,8 @@ func NewMessageT(t int, uid, tid string, body []byte) *MessageT {
 		Id:       time.Now().UnixNano(),
 		UserId:   uid,
 		TargetId: tid,
-		Type:     int32(t),
 		Ack:      ACK_NONE,
+		Type:     int32(t),
 		Body:     body,
 	}
 }
@@ -41,8 +42,8 @@ func NewGroupMessageT(t int, uid, gid string, body []byte) *MessageT {
 		Id:       time.Now().UnixNano(),
 		UserId:   uid,
 		GroupId:  gid,
-		Type:     int32(t),
 		Ack:      ACK_NONE,
+		Type:     int32(t),
 		Body:     body,
 	}
 }

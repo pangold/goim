@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package protobuf;
+
+message Segment {
+    required int64 id          = 1; // One message one id, even though a message's been splited into packages
+    required int32 index       = 2;
+    required int32 total       = 3;
+    optional int32 ack         = 4; // bool
+    optional bytes body        = 5; // Message.Marshal()
+}
+
+message Message {
+    required int64 id          = 1; // time, nano unix
+    required string userId     = 2; // message from (peer)
+    optional string targetId   = 3; // message to (peer)
+    optional string groupId    = 4; // message to (group)
+    optional int32 action      = 5; // CHAT, UPLOAD(UDP:P2P), SYSTEM, FRIEND_REQUESTED, FRIEND_REFUSED, FRIEND_ACCEPTED, GROUP_JOIN_REQUESTED, ...
+    optional int32 ack         = 6; // NONE(WHEN SEND), TRANSMITTED, RECEIVED, READ, OPERATED(PLAY, DOWNLOAD), ...
+    optional int32 type        = 7; // TEXT, JSON, XML, JPEG, PNG, AUDIO, VIDEO, FILE, ...
+    optional bytes body        = 8; // content, size may be huge
+}

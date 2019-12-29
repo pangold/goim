@@ -1,15 +1,14 @@
-package impl
+package protobuf
 
 import (
 	"github.com/golang/protobuf/proto"
-	message "gitlab.com/pangold/goim/msg/protobuf"
 	"testing"
 	"time"
 )
 
 
 
-func TestSplitter_Send(t *testing.T) {
+func TestSplitter_1(t *testing.T) {
 	//
 	body := func(len int) []byte {
 		buf := make([]byte, len)
@@ -19,23 +18,24 @@ func TestSplitter_Send(t *testing.T) {
 		return buf
 	}
 
-	msg := &message.Message{
+	msg := &Message{
 		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
 		GroupId:              nil,
-		Type:                 (*message.Message_MessageType)(proto.Int32(int32(message.Message_TEXT))),
-		Ack:                  (*message.Message_AckType)(proto.Int32(int32(message.Message_NONE))),
+		Action:               proto.Int32(0),
+		Ack:                  proto.Int32(0),
+		Type:                 proto.Int32(0),
 		Body:                 body(1200),
 	}
 
-	handle := func(seg *message.Segment) {
+	handle := func(seg *Segment) {
 		// fmt.Printf("handle segment/resend callback, %d/%d, body: %s\n", seg.GetIndex(), seg.GetTotal(), seg.GetBody())
 	}
 
-	s := &Splitter {
+	s := &Encoder{
 		segmentHandler: handle,
-		resendHandler:  handle,
+		resendHandler:  &handle,
 		acks:           make(map[int64]*acknowledge),
 	}
 

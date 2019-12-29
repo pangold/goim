@@ -1,4 +1,4 @@
-package msg
+package codec
 
 import (
 	"testing"
@@ -14,26 +14,22 @@ func TestMessage_Merge(t *testing.T) {
 		return buf
 	}
 
-	msg := NewMessage()
+	c := NewCodec()
 	mt := NewMessageT(MSG_TEXT, "10001", "10002", body(200000000))
 
-	msg.SetSplitHandler(func(data []byte) {
-		// msg.Merge(data)
+	c.SetEncodeHandler(func(data []byte) {
+		// c.Merge(data)
 		length := len(data)
-		msg.Merge(data[:length / 2])
-		msg.Merge(data[length / 2 :])
+		c.Decode(data[:length / 2])
+		c.Decode(data[length / 2 :])
 	})
 
 	var mt2 *MessageT
-	msg.SetMessageHandler(func(msg *MessageT) {
+	c.SetDecodeHandler(func(msg *MessageT) {
 		mt2 = msg
 	})
 
-	msg.SetAckHandler(func(msg *MessageT){
-
-	})
-
-	if err := msg.Split(mt); err != nil {
+	if err := c.Encode(mt); err != nil {
 		t.Error(err)
 	}
 

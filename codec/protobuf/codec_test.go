@@ -1,13 +1,12 @@
-package impl
+package protobuf
 
 import (
 	"github.com/golang/protobuf/proto"
-	message "gitlab.com/pangold/goim/msg/protobuf"
 	"testing"
 	"time"
 )
 
-func TestProtobuf_ReceivedData(t *testing.T) {
+func TestCodec_1(t *testing.T) {
 
 	//
 	body := func(len int) []byte {
@@ -18,32 +17,32 @@ func TestProtobuf_ReceivedData(t *testing.T) {
 		return buf
 	}
 
-	msg := &message.Message{
+	msg := &Message{
 		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
 		GroupId:              nil,
-		Type:                 (*message.Message_MessageType)(proto.Int32(int32(message.Message_TEXT))),
-		Ack:                  (*message.Message_AckType)(proto.Int32(int32(message.Message_NONE))),
-		// Body:                 body(3000000),
+		Action:               proto.Int32(0),
+		Ack:                  proto.Int32(0),
+		Type:                 proto.Int32(0),
 		Body:                 body(200000000),
 	}
 
-	p := NewMessage()
+	c := NewCodec()
 
-	p.SetSplitHandler(func(data []byte) {
-		//p.SetReceived(data)
+	c.SetEncodeHandler(func(data []byte) {
+		//c.SetReceived(data)
 		length := len(data)
-		p.Merge(data[:length / 2])
-		p.Merge(data[length / 2 :])
+		c.Decode(data[:length / 2])
+		c.Decode(data[length / 2 :])
 	})
 
-	var msg2 *message.Message
-	p.SetMessageHandler(func(msg *message.Message) {
+	var msg2 *Message
+	c.SetDecodeHandler(func(msg *Message) {
 		msg2 = msg
 	})
 
-	if err := p.Split(msg); err != nil {
+	if err := c.Encode(msg); err != nil {
 		t.Error(err)
 	}
 
