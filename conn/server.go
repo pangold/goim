@@ -12,7 +12,7 @@ import (
 type Server struct {
 	servers              []interfaces.Server
 	pool                 interfaces.Pool
-	connectedHandler    *func(string)
+	connectedHandler    *func(string) error
 	disconnectedHandler *func(string)
 	messageHandler      *func([]byte, string) error
 	tokenHandler        *func(string) error
@@ -45,7 +45,7 @@ func (c *Server) SetTokenHandler(handler func(string) error) {
 	c.tokenHandler = &handler
 }
 
-func (c *Server) SetConnectedHandler(handler func(string)) {
+func (c *Server) SetConnectedHandler(handler func(string) error) {
 	// callback from pool is Connection type
 	// callback out from here is string type(token)
 	// that is the difference.
@@ -67,7 +67,9 @@ func (c *Server) handleConnection(connection interfaces.Conn) error {
 		}
 	}
 	if len(token) > 0 && c.connectedHandler != nil {
-		(*c.connectedHandler)(token)
+		if err := (*c.connectedHandler)(token); err != nil {
+			return err
+		}
 	}
 	connection.SetMessageHandler(c.messageHandler)
 	return nil
