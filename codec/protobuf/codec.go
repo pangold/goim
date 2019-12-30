@@ -10,8 +10,8 @@ import (
 type Codec struct {
 	decoder        *Decoder
 	encoder        *Encoder
-	splitHandler   func([]byte)
-	messageHandler func(*Message)
+	encodeHandler  func(interface{}, []byte)
+	decodeHandler  func(interface{}, *Message)
 	remaining      []byte
 }
 
@@ -25,12 +25,12 @@ func NewCodec() *Codec {
 	return c
 }
 
-func (c *Codec) SetEncodeHandler(h func([]byte)) {
-	c.splitHandler = h
+func (c *Codec) SetEncodeHandler(h func(interface{}, []byte)) {
+	c.encodeHandler = h
 }
 
-func (c *Codec) SetDecodeHandler(h func(*Message)) {
-	c.messageHandler = h
+func (c *Codec) SetDecodeHandler(h func(interface{}, *Message)) {
+	c.decodeHandler = h
 }
 
 func (c *Codec) EnableResend(enable bool) {
@@ -41,60 +41,63 @@ func (c *Codec) EnableResend(enable bool) {
 	}
 }
 
-func (c *Codec) Encode(msg *Message) error {
-	if err := c.encoder.Send(msg); err != nil {
+func (c *Codec) Encode(conn interface{}, msg *Message) error {
+	if err := c.encoder.Send(conn, msg); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Codec) Decode(data []byte) int {
+func (c *Codec) Decode(conn interface{}, data []byte) {
 	seg := &Segment{}
 	//
 	c.remaining = append(c.remaining, data...)
 	if err := proto.Unmarshal(c.remaining, seg); err != nil {
 		//log.Println(err.Error())
-		return seg.XXX_Size()
+		return
 	}
 	// clear remaining
 	c.remaining = c.remaining[seg.XXX_Size():]
-	// received segment ack
+	// received an ack segment
 	if seg.GetAck() == 1 {
-		if err := c.encoder.SetAckSegment(seg); err != nil {
-			log.Println(err.Error())
-		}
-		return seg.XXX_Size()
+		c.encoder.SetAckSegment(seg)
+		return
 	}
 	// received a non-ack segment(a real segment)
-	if err := c.decoder.Push(seg); err != nil {
+	if err := c.decoder.Push(conn, seg); err != nil {
 		log.Println(err.Error())
-		return 0
+		return
 	}
 	// reply segment ack
+	if c.encoder.ResendEnabled() {
+		c.ack(conn, seg.GetId())
+	}
+}
+
+func (c *Codec) ack(conn interface{}, id int64) {
 	ack := &Segment{
-		Id:    proto.Int64(seg.GetId()),
+		Id:    proto.Int64(id),
 		Index: proto.Int32(0),
 		Total: proto.Int32(1),
 		Ack:   proto.Int32(1),
 		Body:  nil,
 	}
-	c.handleSegment(ack)
-	return seg.XXX_Size()
+	c.handleSegment(conn, ack)
 }
 
-func (c *Codec) handleSegment(seg *Segment) {
+func (c *Codec) handleSegment(conn interface{}, seg *Segment) {
 	buf, err := proto.Marshal(seg)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
-	c.splitHandler(buf)
+	c.encodeHandler(conn, buf)
 }
 
-func (c *Codec) handleResend(seg *Segment) {
-	c.handleSegment(seg)
+func (c *Codec) handleResend(conn interface{}, seg *Segment) {
+	c.handleSegment(conn, seg)
 }
 
-func (c *Codec) handleMessage(msg *Message) {
-	c.messageHandler(msg)
+func (c *Codec) handleMessage(conn interface{}, msg *Message) {
+	c.decodeHandler(conn, msg)
 }

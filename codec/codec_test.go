@@ -17,19 +17,21 @@ func TestMessage_Merge(t *testing.T) {
 	c := NewCodec()
 	mt := NewMessageT(MSG_TEXT, "10001", "10002", body(200000000))
 
-	c.SetEncodeHandler(func(data []byte) {
+	c.SetEncodeHandler(func(conn interface{}, data []byte) {
 		// c.Merge(data)
 		length := len(data)
-		c.Decode(data[:length / 2])
-		c.Decode(data[length / 2 :])
+		c.Decode(conn, data[:length / 2])
+		c.Decode(conn, data[length / 2 :])
 	})
 
+	c.EnableResend(false)
+
 	var mt2 *MessageT
-	c.SetDecodeHandler(func(msg *MessageT) {
+	c.SetDecodeHandler(func(conn interface{}, msg *MessageT) {
 		mt2 = msg
 	})
 
-	if err := c.Encode(mt); err != nil {
+	if err := c.Encode(nil, mt); err != nil {
 		t.Error(err)
 	}
 

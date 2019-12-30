@@ -30,19 +30,19 @@ func TestCodec_1(t *testing.T) {
 
 	c := NewCodec()
 
-	c.SetEncodeHandler(func(data []byte) {
+	c.SetEncodeHandler(func(conn interface{}, data []byte) {
 		//c.SetReceived(data)
 		length := len(data)
-		c.Decode(data[:length / 2])
-		c.Decode(data[length / 2 :])
+		c.Decode(conn, data[:length / 2])
+		c.Decode(conn, data[length / 2 :])
 	})
 
 	var msg2 *Message
-	c.SetDecodeHandler(func(msg *Message) {
+	c.SetDecodeHandler(func(conn interface{}, msg *Message) {
 		msg2 = msg
 	})
 
-	if err := c.Encode(msg); err != nil {
+	if err := c.Encode(nil, msg); err != nil {
 		t.Error(err)
 	}
 

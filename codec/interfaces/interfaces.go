@@ -11,13 +11,13 @@ import (
 type Codec interface {
 	// Received bytes of data,
 	// Pushing into here, and merge
-	Encode([]byte) int
+	Encode(interface{}, []byte)
 	// Before sending message, split into segments
-	Decode(msg *message.Message) error
+	Decode(interface{}, *message.Message) error
 	// Callback segment, and ready to send
-	SetEncodeHandler(func([]byte))
+	SetEncodeHandler(func(interface{}, []byte))
 	// Callback a received message
-	SetDecodeHandler(func(*message.Message))
+	SetDecodeHandler(func(interface{}, *message.Message))
 	// Enable resend if timeout
 	EnableResend(bool)
 }
@@ -29,9 +29,9 @@ type Codec interface {
 type Decoder interface {
 	// Received a segment,
 	// Pushing into here, and merge
-	Push(*message.Segment)
+	Push(interface{}, *message.Segment)
 	// Callback the complete message
-	SetMessageHandler(func(m *message.Message))
+	SetMessageHandler(func(interface{}, *message.Message))
 }
 
 // Split into segments if message is too large.
@@ -39,13 +39,13 @@ type Decoder interface {
 type Encoder interface {
 	// a fake send function,
 	// it's real purpose is split into segments if message is too large
-	Send(*message.Message)
+	Send(interface{}, *message.Message)
 	// use to tell invokers that it's time to send them out
-	SetSegmentHandler(func(*message.Segment))
+	SetSegmentHandler(func(interface{}, *message.Segment))
 	// if it haven't gotten reply for a long time,
 	// trigger a resend callback.
 	// tips: could be the same to SetPackageHandler
-	SetResendHandler(func(*message.Segment))
+	SetResendHandler(func(interface{}, *message.Segment))
 	// every time, invokers received a ack segment,
 	// tell me here.
 	SetAckSegment(*message.Segment)

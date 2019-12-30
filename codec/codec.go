@@ -6,36 +6,35 @@ import (
 
 type Codec struct {
 	c              *protobuf.Codec
-	ackHandler     func(*MessageT)
-	messageHandler func(*MessageT)
+	decodeHandler func(interface{}, *MessageT)
 }
 
 func NewCodec() *Codec {
 	c := &Codec {
 		c: protobuf.NewCodec(),
 	}
-	c.c.SetDecodeHandler(c.handleMessage)
+	c.c.SetDecodeHandler(c.handleDecodec)
 	return c
-}
-
-// use to send.
-func (c *Codec) SetEncodeHandler(h func([]byte)) {
-	c.c.SetEncodeHandler(h)
-}
-
-func (c *Codec) SetDecodeHandler(h func(*MessageT)) {
-	c.messageHandler = h
 }
 
 func (c *Codec) EnableResend(enable bool) {
 	c.c.EnableResend(enable)
 }
 
-func (c *Codec) Decode(data []byte) int {
-	return c.c.Decode(data)
+// use to send.
+func (c *Codec) SetEncodeHandler(handler func(interface{}, []byte)) {
+	c.c.SetEncodeHandler(handler)
 }
 
-func (c *Codec) Encode(msg *MessageT) error {
+func (c *Codec) SetDecodeHandler(handler func(interface{}, *MessageT)) {
+	c.decodeHandler = handler
+}
+
+func (c *Codec) Decode(conn interface{}, data []byte) {
+	c.c.Decode(conn, data)
+}
+
+func (c *Codec) Encode(conn interface{}, msg *MessageT) error {
 	m := &protobuf.Message {
 		Id:       &msg.Id,
 		UserId:   &msg.UserId,
@@ -46,10 +45,10 @@ func (c *Codec) Encode(msg *MessageT) error {
 		Type:     &msg.Type,
 		Body:     msg.Body,
 	}
-	return c.c.Encode(m)
+	return c.c.Encode(conn, m)
 }
 
-func (c *Codec) handleMessage(msg *protobuf.Message) {
+func (c *Codec) handleDecodec(conn interface{}, msg *protobuf.Message) {
 	m := &MessageT {
 		Id:       msg.GetId(),
 		UserId:   msg.GetUserId(),
@@ -60,5 +59,5 @@ func (c *Codec) handleMessage(msg *protobuf.Message) {
 		Type:     msg.GetType(),
 		Body:     msg.Body,
 	}
-	c.messageHandler(m)
+	c.decodeHandler(conn, m)
 }

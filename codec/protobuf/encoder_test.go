@@ -29,7 +29,7 @@ func TestSplitter_1(t *testing.T) {
 		Body:                 body(1200),
 	}
 
-	handle := func(seg *Segment) {
+	handle := func(conn interface{}, seg *Segment) {
 		// fmt.Printf("handle segment/resend callback, %d/%d, body: %s\n", seg.GetIndex(), seg.GetTotal(), seg.GetBody())
 	}
 
@@ -39,7 +39,7 @@ func TestSplitter_1(t *testing.T) {
 		acks:           make(map[int64]*acknowledge),
 	}
 
-	if err := s.Send(msg); err != nil {
+	if err := s.Send(nil, msg); err != nil {
 		t.Error(err)
 	}
 
@@ -49,7 +49,7 @@ func TestSplitter_1(t *testing.T) {
 	time.Sleep(time.Millisecond * 1000)
 	//msg.
 	msg.Id = proto.Int64(time.Now().UnixNano())
-	if err := s.Send(msg); err != nil {
+	if err := s.Send(nil, msg); err != nil {
 		t.Error(err)
 	}
 
