@@ -11,11 +11,23 @@ type TcpConfig struct {
 	Address   string
 }
 
+type HttpConfig struct {
+	Address   string
+}
+
+type GrpcConfig struct {
+	Address   string
+}
+
 type Config struct {
 	Protocols []string    // support multi protocols
+	// For frontend server/client
 	Ws        WsConfig    // config of websocket protocol
 	Wss       WsConfig    // https
 	Tcp       TcpConfig   // config of tcp protocol
+	// For backend server
+	Http      HttpConfig
+	Grpc      GrpcConfig
 }
 
 var (
@@ -36,7 +48,13 @@ func init() {
 			KeyFile:  "",
 		},
 		Tcp: TcpConfig{
-			Address:  "127.0.0.1:10002",
+			Address:  "0.0.0.0:10002",
+		},
+		Http: HttpConfig{
+			Address:  "0.0.0.0:10003",
+		},
+		Grpc: GrpcConfig{
+			Address:  "0.0.0.0:10004",
 		},
 	}
 }
