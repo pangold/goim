@@ -1,5 +1,7 @@
 package front
 
+// A local session pool for current node.
+
 import (
 	"fmt"
 	"gitlab.com/pangold/goim/utils"
@@ -39,12 +41,13 @@ func (sp *Sessions) Add(token string, filter func(*Session)error) error {
 	if err := filter(s); err != nil {
 		return err
 	}
-	log.Printf("New connection: cid = %s, uid = %s, name = %s", s.ClientId, s.UserId, s.UserName)
+	log.Printf("new connection: cid = %s, uid = %s, name = %s", s.ClientId, s.UserId, s.UserName)
 	sp.sessions[s.UserId] = s
 	return nil
 }
 
 func (sp *Sessions) Remove(token string) {
+	log.Printf("disconnection: token %s", token)
 	delete(sp.sessions, token)
 }
 

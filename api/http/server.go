@@ -1,5 +1,8 @@
 package http
 
+// For backend services
+// Considering the security.
+
 import (
 	"gitlab.com/pangold/goim/api/front"
 	"gitlab.com/pangold/goim/config"

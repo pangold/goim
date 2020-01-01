@@ -33,8 +33,9 @@ func NewServer(conf config.Config) *Server {
 }
 
 func (s *Server) handleFilter(ss *Session) error {
-	// TODO: filter plugin
-	// TODO: micro service rpc request backend service to check if user id is valid
+	if err := s.dispatcher.SessionIn(ss); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -46,6 +47,7 @@ func (s *Server) handleConnected(token string) error {
 }
 
 func (s *Server) handleDisconnected(token string) {
+	s.dispatcher.SessionOut(token)
 	s.sessions.Remove(token)
 }
 
@@ -55,10 +57,10 @@ func (s *Server) handleReceived(data []byte, token string) error {
 }
 
 func (s *Server) handleDecode(token interface{}, msg *protobuf.Message) {
-	if err := s.dispatcher.Dispatch(msg); err != nil {
-		// Nothing needs to be responded
-		// s.codec.Encode(token, res)
-		log.Printf(err.Error())
+	msgs := s.dispatcher.Dispatch(msg)
+	for _, m := range msgs {
+		target := s.sessions.GetTokenByUserId(m.GetTargetId())
+		s.codec.Encode(target, m)
 	}
 }
 
@@ -68,7 +70,7 @@ func (s *Server) handleEncode(token interface{}, data []byte) {
 	}
 }
 
-// for internal dispatcher if we need it
+// for grpc api server
 func (s *Server) SendEx(token string, msg *protobuf.Message) {
 	if err := s.codec.Encode(token, msg); err != nil {
 		log.Printf(err.Error())
@@ -84,7 +86,7 @@ func (s *Server) BroadcastEx(msg *protobuf.Message) {
 	s.conn.Broadcast(data)
 }
 
-// for api server
+// for http api server
 func (s *Server) Send(token string, data []byte) {
 	if err := s.conn.Send(token, data); err != nil {
 		log.Printf(err.Error())

@@ -8,7 +8,7 @@ import (
 )
 
 type Router struct {
-	config     config.HttpConfig
+	config      config.HttpConfig
 	router     *gin.Engine
 	controller *Controller
 }

@@ -14,8 +14,7 @@ type ApiServer struct {
 }
 
 func NewApiServer(conf config.Config) *ApiServer {
-	api := &ApiServer{}
-	api.frontServer = front.NewServer(conf)
+	api := &ApiServer{frontServer: front.NewServer(conf)}
 	api.httpServer = http.NewServer(api.frontServer, conf.Http)
 	api.grpcServer = im.NewGrpcServer(api.frontServer, conf.Grpc)
 	return api
