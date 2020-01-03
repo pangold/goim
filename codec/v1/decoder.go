@@ -1,28 +1,29 @@
-package protobuf
+package v1
 
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"gitlab.com/pangold/goim/codec/protobuf"
 )
 
 type Decoder struct {
-	msgHandler     func(interface{}, *Message)
-	segments       map[int64][]*Segment
+	msgHandler     func(interface{}, *protobuf.Message)
+	segments       map[int64][]*protobuf.Segment
 }
 
 func NewDecoder() *Decoder {
 	return &Decoder{
 		msgHandler: nil,
-		segments:   make(map[int64][]*Segment),
+		segments:   make(map[int64][]*protobuf.Segment),
 	}
 }
 
-func (d *Decoder) SetMessageHandler(h func(interface{}, *Message)) {
+func (d *Decoder) SetMessageHandler(h func(interface{}, *protobuf.Message)) {
 	d.msgHandler = h
 }
 
 //
-func (d *Decoder) Push(conn interface{}, seg *Segment) error {
+func (d *Decoder) Push(conn interface{}, seg *protobuf.Segment) error {
 	// optimize for single segment
 	if seg.GetTotal() == 1 {
 		return d.single(conn, seg.GetBody())
@@ -40,7 +41,7 @@ func (d *Decoder) Push(conn interface{}, seg *Segment) error {
 // But the size of every body of segment is the same
 // FIXME: what if []*message.Segment's size is huge...
 //        such as video file
-func (d *Decoder) multi(conn interface{}, sl []*Segment) error {
+func (d *Decoder) multi(conn interface{}, sl []*protobuf.Segment) error {
 	buf := make([]byte, MAX_SEGMENT_SIZE* (len(sl) - 1))
 	for _, seg := range sl {
 		// the last segment of a message
@@ -60,7 +61,7 @@ func (d *Decoder) multi(conn interface{}, sl []*Segment) error {
 
 // A message with single one segment
 func (m *Decoder) single(conn interface{}, buf []byte) error {
-	msg := &Message{}
+	msg := &protobuf.Message{}
 	if err := proto.Unmarshal(buf, msg); err != nil {
 		return errors.New("unmarshal message error: " + err.Error())
 	}

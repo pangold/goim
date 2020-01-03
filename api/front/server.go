@@ -3,6 +3,7 @@ package front
 import (
 	"github.com/golang/protobuf/proto"
 	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/codec/v1"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/conn"
 	"log"
@@ -11,7 +12,7 @@ import (
 type Server struct {
 	conn       *conn.Server
 	// FIXME: what if I want another codec
-	codec      *protobuf.Codec
+	codec      *v1.Codec
 	sessions   *Sessions
 	dispatcher *Dispatcher
 }
@@ -20,7 +21,7 @@ func NewServer(conf config.Config) *Server {
 	s := &Server{
 		conn:       conn.NewServer(conf),
 		// FIXME: what if I want another codec
-		codec:      protobuf.NewCodec(),
+		codec:      v1.NewCodec(),
 		sessions:   NewSessions(),
 		dispatcher: NewDispatcher(),
 	}

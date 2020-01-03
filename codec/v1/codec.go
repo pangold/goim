@@ -1,7 +1,8 @@
-package protobuf
+package v1
 
 import (
 	"github.com/golang/protobuf/proto"
+	"gitlab.com/pangold/goim/codec/protobuf"
 	"log"
 )
 
@@ -11,7 +12,7 @@ type Codec struct {
 	decoder        *Decoder
 	encoder        *Encoder
 	encodeHandler  func(interface{}, []byte)
-	decodeHandler  func(interface{}, *Message)
+	decodeHandler  func(interface{}, *protobuf.Message)
 	remaining      []byte
 }
 
@@ -29,7 +30,7 @@ func (c *Codec) SetEncodeHandler(h func(interface{}, []byte)) {
 	c.encodeHandler = h
 }
 
-func (c *Codec) SetDecodeHandler(h func(interface{}, *Message)) {
+func (c *Codec) SetDecodeHandler(h func(interface{}, *protobuf.Message)) {
 	c.decodeHandler = h
 }
 
@@ -41,7 +42,7 @@ func (c *Codec) EnableResend(enable bool) {
 	}
 }
 
-func (c *Codec) Encode(conn interface{}, msg *Message) error {
+func (c *Codec) Encode(conn interface{}, msg *protobuf.Message) error {
 	if err := c.encoder.Send(conn, msg); err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (c *Codec) Encode(conn interface{}, msg *Message) error {
 }
 
 func (c *Codec) Decode(conn interface{}, data []byte) {
-	seg := &Segment{}
+	seg := &protobuf.Segment{}
 	//
 	c.remaining = append(c.remaining, data...)
 	if err := proto.Unmarshal(c.remaining, seg); err != nil {
@@ -75,7 +76,7 @@ func (c *Codec) Decode(conn interface{}, data []byte) {
 }
 
 func (c *Codec) ack(conn interface{}, id int64) {
-	ack := &Segment{
+	ack := &protobuf.Segment{
 		Id:    proto.Int64(id),
 		Index: proto.Int32(0),
 		Total: proto.Int32(1),
@@ -85,7 +86,7 @@ func (c *Codec) ack(conn interface{}, id int64) {
 	c.handleSegment(conn, ack)
 }
 
-func (c *Codec) handleSegment(conn interface{}, seg *Segment) {
+func (c *Codec) handleSegment(conn interface{}, seg *protobuf.Segment) {
 	buf, err := proto.Marshal(seg)
 	if err != nil {
 		log.Println(err.Error())
@@ -94,10 +95,10 @@ func (c *Codec) handleSegment(conn interface{}, seg *Segment) {
 	c.encodeHandler(conn, buf)
 }
 
-func (c *Codec) handleResend(conn interface{}, seg *Segment) {
+func (c *Codec) handleResend(conn interface{}, seg *protobuf.Segment) {
 	c.handleSegment(conn, seg)
 }
 
-func (c *Codec) handleMessage(conn interface{}, msg *Message) {
+func (c *Codec) handleMessage(conn interface{}, msg *protobuf.Message) {
 	c.decodeHandler(conn, msg)
 }

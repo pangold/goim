@@ -2,16 +2,17 @@ package codec
 
 import (
 	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/codec/v1"
 )
 
 type Codec struct {
-	c              *protobuf.Codec
+	c              *v1.Codec
 	decodeHandler func(interface{}, *MessageT)
 }
 
 func NewCodec() *Codec {
 	c := &Codec {
-		c: protobuf.NewCodec(),
+		c: v1.NewCodec(),
 	}
 	c.c.SetDecodeHandler(c.handleDecodec)
 	return c

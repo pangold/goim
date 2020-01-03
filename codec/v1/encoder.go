@@ -1,8 +1,9 @@
-package protobuf
+package v1
 
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
+	"gitlab.com/pangold/goim/codec/protobuf"
 	"log"
 	"time"
 )
@@ -13,14 +14,14 @@ const (
 )
 
 type Encoder struct {
-	segmentHandler  func(interface{}, *Segment)
-	resendHandler  *func(interface{}, *Segment)
+	segmentHandler  func(interface{}, *protobuf.Segment)
+	resendHandler  *func(interface{}, *protobuf.Segment)
 	acks            map[int64]*acknowledge //
 }
 
 type acknowledge struct {
 	id       int64
-	segments []*Segment
+	segments []*protobuf.Segment
 	timer    *time.Timer
 	retry    int
 }
@@ -33,11 +34,11 @@ func NewEncoder() *Encoder {
 	}
 }
 
-func (e *Encoder) SetSegmentHandler(handler func(interface{}, *Segment)) {
+func (e *Encoder) SetSegmentHandler(handler func(interface{}, *protobuf.Segment)) {
 	e.segmentHandler = handler
 }
 
-func (e *Encoder) SetResendHandler(handler func(interface{}, *Segment)) {
+func (e *Encoder) SetResendHandler(handler func(interface{}, *protobuf.Segment)) {
 	e.resendHandler = &handler
 }
 
@@ -46,7 +47,7 @@ func (e *Encoder) ResendEnabled() bool {
 }
 
 // without ack, segment will be held in acknowledge list
-func (e *Encoder) SetAckSegment(seg *Segment) {
+func (e *Encoder) SetAckSegment(seg *protobuf.Segment) {
 	if ack, ok := e.acks[seg.GetId()]; ok && e.ResendEnabled() {
 		// being ack, clear
 		// optimize: release by gc, or release immediately yourself
@@ -54,7 +55,7 @@ func (e *Encoder) SetAckSegment(seg *Segment) {
 	}
 }
 
-func (e *Encoder) Send(conn interface{}, msg *Message) error {
+func (e *Encoder) Send(conn interface{}, msg *protobuf.Message) error {
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return errors.New("split error: " + err.Error())
@@ -64,7 +65,7 @@ func (e *Encoder) Send(conn interface{}, msg *Message) error {
 	if e.ResendEnabled() {
 		ack = &acknowledge{id: msg.GetId()}
 		e.acks[msg.GetId()] = ack
-		ack.segments = make([]*Segment, pages)
+		ack.segments = make([]*protobuf.Segment, pages)
 	}
 	for index := int32(0); index < pages; index++ {
 		seg := e.single(msg.GetId(), index, pages, buf)
@@ -85,12 +86,12 @@ func (e *Encoder) Send(conn interface{}, msg *Message) error {
 	return nil
 }
 
-func (e *Encoder) single(id int64, index, pages int32, buf []byte) *Segment {
+func (e *Encoder) single(id int64, index, pages int32, buf []byte) *protobuf.Segment {
 	end := int((index + 1) * MAX_SEGMENT_SIZE)
 	if index == pages - 1 {
 		end = len(buf)
 	}
-	return &Segment {
+	return &protobuf.Segment{
 		Id:      proto.Int64(id),
 		Index:   proto.Int32(index),
 		Total:   proto.Int32(pages),

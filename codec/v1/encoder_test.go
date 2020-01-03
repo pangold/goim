@@ -1,7 +1,8 @@
-package protobuf
+package v1
 
 import (
 	"github.com/golang/protobuf/proto"
+	"gitlab.com/pangold/goim/codec/protobuf"
 	"testing"
 	"time"
 )
@@ -18,7 +19,7 @@ func TestSplitter_1(t *testing.T) {
 		return buf
 	}
 
-	msg := &Message{
+	msg := &protobuf.Message{
 		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
@@ -29,7 +30,7 @@ func TestSplitter_1(t *testing.T) {
 		Body:                 body(1200),
 	}
 
-	handle := func(conn interface{}, seg *Segment) {
+	handle := func(conn interface{}, seg *protobuf.Segment) {
 		// fmt.Printf("handle segment/resend callback, %d/%d, body: %s\n", seg.GetIndex(), seg.GetTotal(), seg.GetBody())
 	}
 
