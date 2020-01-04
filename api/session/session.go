@@ -5,17 +5,17 @@ package session
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	api "gitlab.com/pangold/goim/api/grpc"
+	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/utils"
 	"log"
 )
 
 type Sessions struct {
-	sessions map[string]*api.Session
+	sessions map[string]*pb.Session
 }
 
-func NewSession(token string) *api.Session {
-	s := &api.Session{
+func NewSession(token string) *pb.Session {
+	s := &pb.Session{
 		Token:   &token,
 		UserId:   proto.String(""),
 		UserName: proto.String(""),
@@ -30,11 +30,11 @@ func NewSession(token string) *api.Session {
 
 func NewSessions() *Sessions {
 	return &Sessions {
-		sessions: make(map[string]*api.Session),
+		sessions: make(map[string]*pb.Session),
 	}
 }
 
-func (sp *Sessions) Add(token string, filter func(*api.Session)error) error {
+func (sp *Sessions) Add(token string, filter func(*pb.Session)error) error {
 	s := NewSession(token)
 	if s == nil {
 		return fmt.Errorf("invalid token: %s", token)
@@ -47,7 +47,7 @@ func (sp *Sessions) Add(token string, filter func(*api.Session)error) error {
 	return nil
 }
 
-func (sp *Sessions) Remove(token string) *api.Session {
+func (sp *Sessions) Remove(token string) *pb.Session {
 	log.Printf("disconnection: token %s", token)
 	tmp := NewSession(token)
 	_, ok := sp.sessions[tmp.GetUserId()]

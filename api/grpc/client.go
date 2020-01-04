@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/protocol"
 	"google.golang.org/grpc"
@@ -11,10 +12,10 @@ import (
 )
 
 type Client struct {
-	conn        *grpc.ClientConn
+	conn         *grpc.ClientConn
 	context      context.Context
-	ImApi        ImApiServiceClient
-	ImDispatcher ImDispatchServiceClient
+	ImApi        pb.ImApiServiceClient
+	ImDispatcher pb.ImDispatchServiceClient
 }
 
 func NewClient(conf config.GrpcConfig) *Client {
@@ -26,8 +27,8 @@ func NewClient(conf config.GrpcConfig) *Client {
 	return &Client{
 		conn:         conn,
 		context:      ctx,
-		ImApi:        NewImApiServiceClient(conn),
-		ImDispatcher: NewImDispatchServiceClient(conn),
+		ImApi:        pb.NewImApiServiceClient(conn),
+		ImDispatcher: pb.NewImDispatchServiceClient(conn),
 	}
 }
 
@@ -69,7 +70,7 @@ func (c *Client) Broadcast(action, t, ack int32, body []byte) bool {
 }
 
 func (c *Client) GetConnections() []string {
-	res, err := c.ImApi.GetConnections(c.context, &Empty{})
+	res, err := c.ImApi.GetConnections(c.context, &pb.Empty{})
 	if err != nil {
 		log.Printf("failed to get connections, error: %v", err)
 		return nil
@@ -78,7 +79,7 @@ func (c *Client) GetConnections() []string {
 }
 
 func (c *Client) Online(uid string) bool {
-	res, err := c.ImApi.Online(c.context, &User{UserId: &uid})
+	res, err := c.ImApi.Online(c.context, &pb.User{UserId: &uid})
 	if err != nil {
 		log.Printf("failed to get online users(%s), error: %v", uid, err)
 		return false
@@ -87,7 +88,7 @@ func (c *Client) Online(uid string) bool {
 }
 
 func (c *Client) Kick(uid string) bool {
-	res, err := c.ImApi.Kick(c.context, &User{UserId: &uid})
+	res, err := c.ImApi.Kick(c.context, &pb.User{UserId: &uid})
 	if err != nil {
 		log.Printf("failed to kick user(%s), error: %v", uid, err)
 		return false
@@ -97,7 +98,7 @@ func (c *Client) Kick(uid string) bool {
 
 // handle dispatch messages / sessions
 func (c *Client) GetDispatchedMessages() {
-	cli, _ := c.ImDispatcher.Dispatch(context.Background(), &Empty{})
+	cli, _ := c.ImDispatcher.Dispatch(context.Background(), &pb.Empty{})
 	for {
 		msg, err := cli.Recv()
 		if err != nil {
@@ -110,7 +111,7 @@ func (c *Client) GetDispatchedMessages() {
 }
 
 func (c *Client) GetSessionIn() {
-	cli, _ := c.ImDispatcher.SessionIn(context.Background(), &Empty{})
+	cli, _ := c.ImDispatcher.SessionIn(context.Background(), &pb.Empty{})
 	for {
 		session, err := cli.Recv()
 		if err != nil {
@@ -123,7 +124,7 @@ func (c *Client) GetSessionIn() {
 }
 
 func (c *Client) GetSessionOut() {
-	cli, _ := c.ImDispatcher.SessionOut(context.Background(), &Empty{})
+	cli, _ := c.ImDispatcher.SessionOut(context.Background(), &pb.Empty{})
 	for {
 		session, err := cli.Recv()
 		if err != nil {

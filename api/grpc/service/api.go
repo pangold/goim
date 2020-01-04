@@ -1,10 +1,11 @@
-package api
+package service
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/front"
 	"gitlab.com/pangold/goim/protocol"
@@ -23,8 +24,8 @@ func NewImApiService(f *front.Server, ss *session.Sessions) *ImApiService {
 	}
 }
 
-func (c *ImApiService) GetConnections(ctx context.Context, req *Empty) (res *Users, err error) {
-	res = &Users{
+func (c *ImApiService) GetConnections(ctx context.Context, req *pb.Empty) (res *pb.Users, err error) {
+	res = &pb.Users{
 		UserIds: c.sessions.GetUserIds(),
 	}
 	return res, err
@@ -44,7 +45,7 @@ func (c *ImApiService) send(msg *protocol.Message) error {
 	return nil
 }
 
-func (c *ImApiService) Send(srv ImApiService_SendServer) error {
+func (c *ImApiService) Send(srv pb.ImApiService_SendServer) error {
 	for {
 		msg, err := srv.Recv()
 		if err != nil {
@@ -58,7 +59,7 @@ func (c *ImApiService) Send(srv ImApiService_SendServer) error {
 	return nil
 }
 
-func (c *ImApiService) Broadcast(srv ImApiService_BroadcastServer) error {
+func (c *ImApiService) Broadcast(srv pb.ImApiService_BroadcastServer) error {
 	for {
 		msg, err := srv.Recv()
 		if err != nil {
@@ -70,15 +71,15 @@ func (c *ImApiService) Broadcast(srv ImApiService_BroadcastServer) error {
 	return nil
 }
 
-func (c *ImApiService) Online(ctx context.Context, req *User) (*Result, error) {
+func (c *ImApiService) Online(ctx context.Context, req *pb.User) (*pb.Result, error) {
 	if req.GetUserId() == "" {
 		return nil, errors.New("uid could not be null")
 	}
 	token := c.sessions.GetTokenByUserId(req.GetUserId())
-	return &Result{Success: proto.Bool(token != "")}, nil
+	return &pb.Result{Success: proto.Bool(token != "")}, nil
 }
 
-func (c *ImApiService) Kick(ctx context.Context, req *User) (*Result, error) {
+func (c *ImApiService) Kick(ctx context.Context, req *pb.User) (*pb.Result, error) {
 	if req.GetUserId() != "" {
 		return nil, errors.New("uid could not be null")
 	}
@@ -87,5 +88,5 @@ func (c *ImApiService) Kick(ctx context.Context, req *User) (*Result, error) {
 		return nil, fmt.Errorf("uid(%s) is not online", req.GetUserId())
 	}
 	c.front.Remove(token)
-	return &Result{Success: proto.Bool(true)}, nil
+	return &pb.Result{Success: proto.Bool(true)}, nil
 }

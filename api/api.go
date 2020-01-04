@@ -2,6 +2,7 @@ package api
 
 import (
 	grpc "gitlab.com/pangold/goim/api/grpc"
+	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/api/http"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
@@ -35,7 +36,7 @@ func (a *ApiServer) Run() {
 // TODO: dispatch to backend service(cluster) to store in db/redis/etcd
 // TODO: filter plugin if user id is invalid
 func (a *ApiServer) handleConnection(token string) error {
-	return a.sessions.Add(token, func(session *grpc.Session) error {
+	return a.sessions.Add(token, func(session *pb.Session) error {
 		// do filter
 		a.grpcServer.Dispatcher.PutSessionIn(session)
 		return nil

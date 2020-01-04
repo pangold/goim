@@ -1,20 +1,21 @@
-package api
+package service
 
 import (
+	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/protocol"
 )
 
 type ImDispatchService struct {
 	messageIn  chan *protocol.Message
-	sessionIn  chan *Session
-	sessionOut chan *Session
+	sessionIn  chan *pb.Session
+	sessionOut chan *pb.Session
 }
 
 func NewImDispatchService() *ImDispatchService {
 	return &ImDispatchService{
 		messageIn:  make(chan *protocol.Message, 1024),
-		sessionIn:  make(chan *Session, 1024),
-		sessionOut: make(chan *Session, 1024),
+		sessionIn:  make(chan *pb.Session, 1024),
+		sessionOut: make(chan *pb.Session, 1024),
 	}
 }
 
@@ -22,15 +23,15 @@ func (c *ImDispatchService) PutMessage(msg *protocol.Message) {
 	c.messageIn <- msg
 }
 
-func (c *ImDispatchService) PutSessionIn(session *Session) {
+func (c *ImDispatchService) PutSessionIn(session *pb.Session) {
 	c.sessionIn <- session
 }
 
-func (c *ImDispatchService) PutSessionOut(session *Session) {
+func (c *ImDispatchService) PutSessionOut(session *pb.Session) {
 	c.sessionOut <- session
 }
 
-func (c *ImDispatchService) Dispatch(req *Empty, srv ImDispatchService_DispatchServer) error {
+func (c *ImDispatchService) Dispatch(req *pb.Empty, srv pb.ImDispatchService_DispatchServer) error {
 	for {
 		select {
 		case msg := <-c.messageIn:
@@ -40,7 +41,7 @@ func (c *ImDispatchService) Dispatch(req *Empty, srv ImDispatchService_DispatchS
 	return nil
 }
 
-func (c *ImDispatchService) SessionIn(req *Empty, srv ImDispatchService_SessionInServer) error {
+func (c *ImDispatchService) SessionIn(req *pb.Empty, srv pb.ImDispatchService_SessionInServer) error {
 	for {
 		select {
 		case msg := <-c.sessionIn:
@@ -50,7 +51,7 @@ func (c *ImDispatchService) SessionIn(req *Empty, srv ImDispatchService_SessionI
 	return nil
 }
 
-func (c *ImDispatchService) SessionOut(req *Empty, srv ImDispatchService_SessionOutServer) error {
+func (c *ImDispatchService) SessionOut(req *pb.Empty, srv pb.ImDispatchService_SessionOutServer) error {
 	for {
 		select {
 		case msg := <-c.sessionOut:
