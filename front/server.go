@@ -1,14 +1,14 @@
-package conn
+package front
 
 import (
 	"errors"
 	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/config"
-	"gitlab.com/pangold/goim/conn/codec"
-	"gitlab.com/pangold/goim/conn/pool"
-	"gitlab.com/pangold/goim/conn/interfaces"
-	"gitlab.com/pangold/goim/conn/tcp"
-	"gitlab.com/pangold/goim/conn/websocket"
+	"gitlab.com/pangold/goim/front/codec"
+	"gitlab.com/pangold/goim/front/pool"
+	"gitlab.com/pangold/goim/front/interfaces"
+	"gitlab.com/pangold/goim/front/tcp"
+	"gitlab.com/pangold/goim/front/websocket"
 )
 
 type Server struct {

@@ -2,7 +2,7 @@ package codec
 
 import (
 	"gitlab.com/pangold/goim/codec/protobuf"
-	"gitlab.com/pangold/goim/conn/codec"
+	"gitlab.com/pangold/goim/front/codec"
 )
 
 type Codec struct {

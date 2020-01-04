@@ -1,4 +1,4 @@
-package conn
+package front
 
 import (
 	"gitlab.com/pangold/goim/config"

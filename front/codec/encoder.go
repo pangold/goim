@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"gitlab.com/pangold/goim/codec/protobuf"
-	"gitlab.com/pangold/goim/conn/interfaces"
+	"gitlab.com/pangold/goim/front/interfaces"
 	"time"
 )
 

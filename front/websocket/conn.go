@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"github.com/gorilla/websocket"
-	"gitlab.com/pangold/goim/conn/interfaces"
+	"gitlab.com/pangold/goim/front/interfaces"
 	"log"
 	"time"
 )
