@@ -22,7 +22,8 @@ func NewClient(conf config.GrpcConfig) *Client {
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect: %v", err))
 	}
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx := context.Background()
+	// ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	return &Client{
 		conn:         conn,
 		context:      ctx,
@@ -62,7 +63,7 @@ func (c *Client) Broadcast(action, t, ack int32, body []byte) bool {
 	}
 	cli, _ := c.ImApi.Broadcast(context.Background())
 	if err := cli.Send(msg); err != nil {
-		log.Printf("send message error: %v", err)
+		log.Printf("broadcast message error: %v", err)
 		return false
 	}
 	return true
