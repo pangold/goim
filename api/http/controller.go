@@ -2,25 +2,30 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.com/pangold/goim/api/front"
+	"github.com/golang/protobuf/proto"
+	"gitlab.com/pangold/goim/api/session"
+	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/front"
 	"net/http"
 	"strings"
 )
 
 type Controller struct {
-	front *front.Server
+	front    *front.Server
+	sessions *session.Sessions
 }
 
-func NewController(front *front.Server) *Controller {
+func NewController(front *front.Server, ss *session.Sessions) *Controller {
 	return &Controller{
-		front: front,
+		front:    front,
+		sessions: ss,
 	}
 }
 
 func (c *Controller) List(ctx *gin.Context) {
 	// simple encode,
 	// to decode: strings.Split(s, ",")
-	ctx.String(http.StatusOK, strings.Join(c.front.GetOnlineUserIds(), ","))
+	ctx.String(http.StatusOK, strings.Join(c.sessions.GetUserIds(), ","))
 }
 
 // body: could be any word, such '&', '='
@@ -33,19 +38,28 @@ func (c *Controller) Send(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "uid could not be null")
 		return
 	}
-	token := c.front.GetOnlineTokenByUserId(uid)
+	token := c.sessions.GetTokenByUserId(uid)
 	if token == "" {
-		ctx.String(http.StatusNotFound, "uid(%s) is not online", uid)
+		ctx.String(http.StatusBadRequest, "uid(%s) is not online", uid)
 		return
 	}
 	// get data that needs to be sent in http request body
 	data := make([]byte, 0)
-	_, err := ctx.Request.Body.Read(data)
-	if err != nil {
+	if _, err := ctx.Request.Body.Read(data); err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	c.front.Send(token, data)
+	// decode
+	msg := &protobuf.Message{}
+	if err := proto.Unmarshal(data, msg); err != nil {
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	// send
+	if err := c.front.Send(token, msg); err != nil {
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
+	}
 	ctx.Status(http.StatusOK)
 }
 
@@ -57,7 +71,13 @@ func (c *Controller) Broadcast(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	c.front.Broadcast(data)
+	// decode
+	msg := &protobuf.Message{}
+	if err := proto.Unmarshal(data, msg); err != nil {
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	c.front.Broadcast(msg)
 	ctx.Status(http.StatusOK)
 }
 
@@ -68,11 +88,11 @@ func (c *Controller) Online(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "uid could not be null")
 		return
 	}
-	token := c.front.GetOnlineTokenByUserId(uid)
+	token := c.sessions.GetTokenByUserId(uid)
 	if token == "" {
-		ctx.Status(http.StatusNotFound)
+		ctx.String(http.StatusOK, "0")
 	}
-	ctx.Status(http.StatusOK)
+	ctx.String(http.StatusOK, "1")
 }
 
 func (c *Controller) Kick(ctx *gin.Context) {
@@ -82,9 +102,9 @@ func (c *Controller) Kick(ctx *gin.Context) {
 		ctx.String(http.StatusBadRequest, "uid could not be null")
 		return
 	}
-	token := c.front.GetOnlineTokenByUserId(uid)
+	token := c.sessions.GetTokenByUserId(uid)
 	if token == "" {
-		ctx.String(http.StatusNotFound, "uid(%s) is not online", uid)
+		ctx.String(http.StatusBadRequest, "uid(%s) is not online", uid)
 	}
 	c.front.Remove(token)
 	ctx.Status(http.StatusOK)

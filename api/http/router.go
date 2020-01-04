@@ -2,8 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.com/pangold/goim/api/front"
+	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
+	"gitlab.com/pangold/goim/front"
 	"log"
 )
 
@@ -13,11 +14,11 @@ type Router struct {
 	controller *Controller
 }
 
-func NewRouter(front *front.Server, conf config.HttpConfig) *Router {
+func NewRouter(front *front.Server, ss *session.Sessions, conf config.HttpConfig) *Router {
 	r := &Router{
 		config:     conf,
 		router:     gin.Default(),
-		controller: NewController(front),
+		controller: NewController(front, ss),
 	}
 	basicRouter(r.router, r.controller)
 	return r

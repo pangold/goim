@@ -1,4 +1,4 @@
-package v2
+package codec
 
 import (
 	"github.com/golang/protobuf/proto"

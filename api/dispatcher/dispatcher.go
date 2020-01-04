@@ -1,6 +1,7 @@
-package front
+package dispatcher
 
 import (
+	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/codec/protobuf"
 )
 
@@ -30,7 +31,7 @@ func (d *Dispatcher) Dispatch(msg *protobuf.Message) []*protobuf.Message {
 	return res
 }
 
-func (d *Dispatcher) SessionIn(s *Session) error {
+func (d *Dispatcher) SessionIn(s *session.Session) error {
 	// TODO: dispatch to backend service(cluster) to store in db/redis/etcd
 	// TODO: filter plugin if user id is invalid
 	//

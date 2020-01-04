@@ -1,4 +1,4 @@
-package v2
+package codec
 
 import (
 	"errors"
@@ -29,7 +29,7 @@ func (d *Decoder) Decode(segs []*protobuf.Segment) (*protobuf.Message, error) {
 
 // The size of body of segments are the same, except the last segment
 func (d *Decoder) multi(segs []*protobuf.Segment) (*protobuf.Message, error) {
-	buf := make([]byte, MAX_SEGMENT_SIZE * (len(segs) - 1))
+	buf := make([]byte, MAX_SEGMENT_SIZE* (len(segs) - 1))
 	for i := 0; i < len(segs) - 1; i++ {
 		if len(segs[i].GetBody()) > MAX_SEGMENT_SIZE {
 			return nil, errors.New("unexpected segment size")

@@ -1,4 +1,4 @@
-package front
+package session
 
 // A local session pool for current node.
 

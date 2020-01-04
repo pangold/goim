@@ -4,17 +4,18 @@ package http
 // Considering the security.
 
 import (
-	"gitlab.com/pangold/goim/api/front"
+	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
+	"gitlab.com/pangold/goim/front"
 )
 
 type Server struct {
 	router *Router
 }
 
-func NewServer(front *front.Server, conf config.HttpConfig) *Server {
+func NewServer(front *front.Server, ss *session.Sessions, conf config.HttpConfig) *Server {
 	return &Server{
-		router: NewRouter(front, conf),
+		router: NewRouter(front, ss, conf),
 	}
 }
 
