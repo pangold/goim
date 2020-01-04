@@ -2,13 +2,13 @@ package front
 
 import (
 	"errors"
-	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/front/codec"
-	"gitlab.com/pangold/goim/front/pool"
 	"gitlab.com/pangold/goim/front/interfaces"
+	"gitlab.com/pangold/goim/front/pool"
 	"gitlab.com/pangold/goim/front/tcp"
 	"gitlab.com/pangold/goim/front/websocket"
+	"gitlab.com/pangold/goim/protocol"
 )
 
 type Server struct {
@@ -16,7 +16,7 @@ type Server struct {
 	pool                 interfaces.Pool
 	connectedHandler    *func(string) error
 	disconnectedHandler *func(string)
-	messageHandler      *func(*protobuf.Message, string) error
+	messageHandler      *func(*protocol.Message, string) error
 }
 
 func NewServer(conf config.Config) *Server {
@@ -37,7 +37,7 @@ func NewServer(conf config.Config) *Server {
 	return s
 }
 
-func (s *Server) SetMessageHandler(handler func(*protobuf.Message, string) error) {
+func (s *Server) SetMessageHandler(handler func(*protocol.Message, string) error) {
 	s.messageHandler = &handler
 }
 
@@ -82,14 +82,14 @@ func (s *Server) handleMessage(data []byte, conn interface{}) error {
 	return nil
 }
 
-func (s *Server) handleDecode(conn interfaces.Conn, msg *protobuf.Message) {
+func (s *Server) handleDecode(conn interfaces.Conn, msg *protocol.Message) {
 	// callback message
 	if s.messageHandler != nil {
 		(*s.messageHandler)(msg, conn.GetToken())
 	}
 }
 
-func (s *Server) Send(token string, msg *protobuf.Message) error {
+func (s *Server) Send(token string, msg *protocol.Message) error {
 	connections := s.pool.GetConnections()
 	if conn, ok := (*connections)[token]; ok {
 		conn.GetCodec().(*codec.Codec).Send(conn, msg)
@@ -98,7 +98,7 @@ func (s *Server) Send(token string, msg *protobuf.Message) error {
 	return errors.New("error: no such connection, token: " + token)
 }
 
-func (s *Server) Broadcast(msg *protobuf.Message) (result []string) {
+func (s *Server) Broadcast(msg *protocol.Message) (result []string) {
 	connections := s.pool.GetConnections()
 	for token, conn := range *connections {
 		conn.GetCodec().(*codec.Codec).Send(conn, msg)

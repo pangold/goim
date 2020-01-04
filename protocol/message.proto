@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package protobuf;
+package protocol;
 
 message Segment {
     required int64 id          = 1; // One message one id, even though a message's been splited into packages

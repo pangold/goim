@@ -2,8 +2,8 @@ package codec
 
 import (
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/front/interfaces"
+	"gitlab.com/pangold/goim/protocol"
 	"log"
 )
 
@@ -12,7 +12,7 @@ import (
 type Codec struct {
 	decoder        *Decoder
 	encoder        *Encoder
-	decodeHandler  func(interfaces.Conn, *protobuf.Message)
+	decodeHandler  func(interfaces.Conn, *proto.Message)
 	remaining      []byte
 }
 
@@ -25,7 +25,7 @@ func NewCodec() *Codec {
 	return c
 }
 
-func (c *Codec) SetDecodeHandler(h func(interfaces.Conn, *protobuf.Message)) {
+func (c *Codec) SetDecodeHandler(h func(interfaces.Conn, *proto.Message)) {
 	c.decodeHandler = h
 }
 
@@ -33,7 +33,7 @@ func (c *Codec) EnableResend(enable bool) {
 	c.encoder.ResendEnabled = enable
 }
 
-func (c *Codec) Send(conn interfaces.Conn, msg *protobuf.Message) error {
+func (c *Codec) Send(conn interfaces.Conn, msg *proto.Message) error {
 	if err := c.encoder.Send(conn, msg); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (c *Codec) Decode(conn interfaces.Conn, data []byte) {
 		if len(c.remaining) == 0 {
 			break
 		}
-		seg := &protobuf.Segment{}
+		seg := &proto.Segment{}
 		if err := proto.Unmarshal(c.remaining, seg); err != nil {
 			//log.Println(err.Error())
 			break
@@ -72,7 +72,7 @@ func (c *Codec) Decode(conn interfaces.Conn, data []byte) {
 }
 
 func (c *Codec) ack(conn interfaces.Conn, id int64) {
-	ack := &protobuf.Segment{
+	ack := &proto.Segment{
 		Id:    proto.Int64(id),
 		Index: proto.Int32(0),
 		Total: proto.Int32(1),
@@ -82,6 +82,6 @@ func (c *Codec) ack(conn interfaces.Conn, id int64) {
 	c.encoder.send(conn, ack)
 }
 
-func (c *Codec) handleMessage(conn interfaces.Conn, msg *protobuf.Message) {
+func (c *Codec) handleMessage(conn interfaces.Conn, msg *proto.Message) {
 	c.decodeHandler(conn, msg)
 }

@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/front/interfaces"
+	"gitlab.com/pangold/goim/protocol"
 )
 
 type Decoder struct {
-	MsgHandler     func(interfaces.Conn, *protobuf.Message)
+	MsgHandler     func(interfaces.Conn, *proto.Message)
 	segments       map[int64]*segments
 }
 
 type segments struct {
-	segs  []*protobuf.Segment
+	segs  []*proto.Segment
 	count int
 }
 
@@ -26,14 +26,14 @@ func NewDecoder() *Decoder {
 }
 
 // because of reset mechanism, seg may be exist
-func (d *Decoder) Decode(conn interfaces.Conn, seg *protobuf.Segment) error {
+func (d *Decoder) Decode(conn interfaces.Conn, seg *proto.Segment) error {
 	// optimize for single segment
 	if seg.GetTotal() == 1 {
 		return d.single(conn, seg.GetBody())
 	}
 	// for multi segments
 	if _, ok := d.segments[seg.GetId()]; !ok {
-		d.segments[seg.GetId()] = &segments{count: 0, segs: make([]*protobuf.Segment, seg.GetTotal())}
+		d.segments[seg.GetId()] = &segments{count: 0, segs: make([]*proto.Segment, seg.GetTotal())}
 	}
 	// check if this segment is resent,
 	// but another segment that with the same id/index/total
@@ -54,7 +54,7 @@ func (d *Decoder) Decode(conn interfaces.Conn, seg *protobuf.Segment) error {
 
 // []*message.Segment is not in order,
 // The size of body of segments are the same, except the last segment
-func (d *Decoder) multi(conn interfaces.Conn, sl []*protobuf.Segment) error {
+func (d *Decoder) multi(conn interfaces.Conn, sl []*proto.Segment) error {
 	buf := make([]byte, MAX_SEGMENT_SIZE* (len(sl) - 1))
 	for i := 0; i < len(sl) - 1; i++ {
 		if len(sl[i].GetBody()) > MAX_SEGMENT_SIZE {
@@ -71,7 +71,7 @@ func (d *Decoder) multi(conn interfaces.Conn, sl []*protobuf.Segment) error {
 
 // A message with single one segment
 func (m *Decoder) single(conn interfaces.Conn, buf []byte) error {
-	msg := &protobuf.Message{}
+	msg := &proto.Message{}
 	if err := proto.Unmarshal(buf, msg); err != nil {
 		return errors.New("unmarshal error: " + err.Error())
 	}

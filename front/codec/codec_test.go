@@ -2,7 +2,7 @@ package codec
 
 import (
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/protocol"
 	"testing"
 	"time"
 )
@@ -18,7 +18,7 @@ func TestCodec_1(t *testing.T) {
 		return buf
 	}
 
-	msg := &protobuf.Message{
+	msg := &proto.Message{
 		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),
@@ -38,8 +38,8 @@ func TestCodec_1(t *testing.T) {
 		c.Decode(conn, data[length / 2 :])
 	})
 
-	var msg2 *protobuf.Message
-	c.SetDecodeHandler(func(conn interface{}, msg *protobuf.Message) {
+	var msg2 *proto.Message
+	c.SetDecodeHandler(func(conn interface{}, msg *proto.Message) {
 		msg2 = msg
 	})
 

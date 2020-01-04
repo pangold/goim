@@ -2,7 +2,7 @@ package codec
 
 import (
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/protocol"
 	"log"
 )
 
@@ -12,7 +12,7 @@ type Codec struct {
 	decoder        *Decoder
 	encoder        *Encoder
 	remaining      []byte
-	segments       []*protobuf.Segment
+	segments       []*protocol.Segment
 }
 
 func NewCodec() *Codec {
@@ -23,7 +23,7 @@ func NewCodec() *Codec {
 	return c
 }
 
-func (c *Codec) Encode(msg *protobuf.Message) []*protobuf.Segment {
+func (c *Codec) Encode(msg *protocol.Message) []*protocol.Segment {
 	ss, err := c.encoder.Encode(msg)
 	if err != nil {
 		log.Printf(err.Error())
@@ -32,25 +32,31 @@ func (c *Codec) Encode(msg *protobuf.Message) []*protobuf.Segment {
 	return ss
 }
 
-func (c *Codec) Decode(data []byte) (res []*protobuf.Message) {
+func (c *Codec) Decode(data []byte) (res []*protocol.Message) {
 	c.remaining = append(c.remaining, data...)
 	for {
 		if len(c.remaining) == 0 {
 			break
 		}
-		seg := &protobuf.Segment{}
+		seg := &protocol.Segment{}
 		if err := proto.Unmarshal(c.remaining, seg); err != nil {
 			break
 		}
 		c.remaining = c.remaining[seg.XXX_Size():]
-		if len(c.segments) != int(seg.GetTotal()) {
-			c.segments = make([]*protobuf.Segment, seg.GetTotal())
-		}
-		c.segments[seg.GetIndex()] = seg
-		if len(c.segments) == int(seg.GetTotal()) {
-			msg, _ := c.decoder.Decode(c.segments)
+		if msg := c.DecodeSegment(seg); msg != nil {
 			res = append(res, msg)
 		}
+	}
+	return res
+}
+
+func (c *Codec) DecodeSegment(seg *protocol.Segment) (res *protocol.Message) {
+	if len(c.segments) != int(seg.GetTotal()) {
+		c.segments = make([]*protocol.Segment, seg.GetTotal())
+	}
+	c.segments[seg.GetIndex()] = seg
+	if len(c.segments) == int(seg.GetTotal()) {
+		res, _ = c.decoder.Decode(c.segments)
 	}
 	return res
 }

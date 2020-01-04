@@ -3,7 +3,7 @@ package codec
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/protocol"
 )
 
 type Decoder struct {
@@ -15,7 +15,7 @@ func NewDecoder() *Decoder {
 }
 
 // because of reset mechanism, seg may be exist
-func (d *Decoder) Decode(segs []*protobuf.Segment) (*protobuf.Message, error) {
+func (d *Decoder) Decode(segs []*protocol.Segment) (*protocol.Message, error) {
 	// optimize for single segment
 	if segs[0].GetTotal() == 1 {
 		return d.single(segs[0].GetBody())
@@ -28,7 +28,7 @@ func (d *Decoder) Decode(segs []*protobuf.Segment) (*protobuf.Message, error) {
 }
 
 // The size of body of segments are the same, except the last segment
-func (d *Decoder) multi(segs []*protobuf.Segment) (*protobuf.Message, error) {
+func (d *Decoder) multi(segs []*protocol.Segment) (*protocol.Message, error) {
 	buf := make([]byte, MAX_SEGMENT_SIZE* (len(segs) - 1))
 	for i := 0; i < len(segs) - 1; i++ {
 		if len(segs[i].GetBody()) > MAX_SEGMENT_SIZE {
@@ -44,8 +44,8 @@ func (d *Decoder) multi(segs []*protobuf.Segment) (*protobuf.Message, error) {
 }
 
 // A message with single one segment
-func (d *Decoder) single(buf []byte) (*protobuf.Message, error) {
-	msg := &protobuf.Message{}
+func (d *Decoder) single(buf []byte) (*protocol.Message, error) {
+	msg := &protocol.Message{}
 	if err := proto.Unmarshal(buf, msg); err != nil {
 		return nil, errors.New("unmarshal error: " + err.Error())
 	}

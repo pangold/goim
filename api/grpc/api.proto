@@ -1,0 +1,46 @@
+syntax = "proto2";
+
+import "message.proto";
+
+package api;
+
+service ImApiService {
+    rpc GetConnections(Empty) returns (Users) {}
+    rpc Send(stream protocol.Message) returns (Result) {}
+    rpc Broadcast(stream protocol.Message) returns (Result) {}
+    rpc Online(User) returns (Result) {}
+    rpc Kick(User) returns (Result) {}
+}
+
+service ImDispatchService {
+    // push messages that from front server to backend services
+    rpc Dispatch(Empty) returns (stream protocol.Message) {}
+    // only for the cluster,
+    // single node doesn't need to sync session
+    rpc SessionIn(Empty) returns (stream Session) {}
+    rpc SessionOut(Empty) returns (stream Session) {}
+}
+
+message Empty {
+
+}
+
+message User {
+    required string userId  = 1;
+}
+
+message Users {
+    repeated string userIds = 1;
+}
+
+message Session {
+    required string token    = 1;
+    optional string userId   = 2;
+    optional string userName = 3;
+    optional string clientId = 4;
+    optional string nodeName = 5;
+}
+
+message Result {
+    required bool success   = 1;
+}

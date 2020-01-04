@@ -3,7 +3,7 @@ package codec
 import (
 	"errors"
 	"github.com/golang/protobuf/proto"
-	"gitlab.com/pangold/goim/codec/protobuf"
+	"gitlab.com/pangold/goim/protocol"
 )
 
 const (
@@ -18,7 +18,7 @@ func NewEncoder() *Encoder {
 	return &Encoder{}
 }
 
-func (e *Encoder) Encode(msg *protobuf.Message) (res []*protobuf.Segment, err error) {
+func (e *Encoder) Encode(msg *protocol.Message) (res []*protocol.Segment, err error) {
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, errors.New("encode error: " + err.Error())
@@ -31,12 +31,12 @@ func (e *Encoder) Encode(msg *protobuf.Message) (res []*protobuf.Segment, err er
 	return res, nil
 }
 
-func (e *Encoder) single(id int64, index, pages int32, buf []byte) *protobuf.Segment {
+func (e *Encoder) single(id int64, index, pages int32, buf []byte) *protocol.Segment {
 	end := int((index + 1) * MAX_SEGMENT_SIZE)
 	if index == pages - 1 {
 		end = len(buf)
 	}
-	return &protobuf.Segment{
+	return &protocol.Segment{
 		Id:      &id,
 		Index:   &index,
 		Total:   &pages,

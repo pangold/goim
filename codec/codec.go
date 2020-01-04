@@ -1,8 +1,8 @@
 package codec
 
 import (
-	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/front/codec"
+	"gitlab.com/pangold/goim/protocol"
 )
 
 type Codec struct {
@@ -36,7 +36,7 @@ func (c *Codec) Decode(conn interface{}, data []byte) {
 }
 
 func (c *Codec) Encode(conn interface{}, msg *MessageT) error {
-	m := &protobuf.Message {
+	m := &protocol.Message{
 		Id:       &msg.Id,
 		UserId:   &msg.UserId,
 		TargetId: &msg.TargetId,
@@ -49,7 +49,7 @@ func (c *Codec) Encode(conn interface{}, msg *MessageT) error {
 	return c.c.Encode(conn, m)
 }
 
-func (c *Codec) handleDecodec(conn interface{}, msg *protobuf.Message) {
+func (c *Codec) handleDecodec(conn interface{}, msg *protocol.Message) {
 	m := &MessageT {
 		Id:       msg.GetId(),
 		UserId:   msg.GetUserId(),

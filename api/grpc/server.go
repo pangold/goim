@@ -1,4 +1,4 @@
-package im
+package api
 
 // For backend services
 // Considering the security.
@@ -14,17 +14,18 @@ import (
 )
 
 type Server struct {
-	config    config.GrpcConfig
-	front    *front.Server
-	sessions *session.Sessions
-
+	config      config.GrpcConfig
+	front      *front.Server
+	sessions   *session.Sessions
+	Dispatcher *ImDispatchService
 }
 
-func NewGrpcServer(front *front.Server, ss *session.Sessions, conf config.GrpcConfig) *Server {
+func NewServer(front *front.Server, ss *session.Sessions, conf config.GrpcConfig) *Server {
 	return &Server{
-		config:   conf,
-		front:    front,
-		sessions: ss,
+		config:     conf,
+		front:      front,
+		sessions:   ss,
+		Dispatcher: NewImDispatchService(),
 	}
 }
 
@@ -35,7 +36,8 @@ func (s *Server) Run() {
 	}
 	log.Printf("grpc server start running, address: %s", s.config.Address)
 	ss := grpc.NewServer()
-	RegisterApiServer(ss, NewController(s.front, s.sessions))
+	RegisterImDispatchServiceServer(ss, s.Dispatcher)
+	RegisterImApiServiceServer(ss, NewImApiService(s.front, s.sessions))
 	//
 	reflection.Register(ss)
 	if err := ss.Serve(listener); err != nil {

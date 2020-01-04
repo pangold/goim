@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	message "gitlab.com/pangold/goim/codec/protobuf"
+	message "gitlab.com/pangold/goim/protocol"
 )
 
 // It's a message encoder & decoder
