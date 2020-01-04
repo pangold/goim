@@ -3,7 +3,6 @@ package tcp
 import (
 	"fmt"
 	"gitlab.com/pangold/goim/config"
-	"gitlab.com/pangold/goim/conn/common"
 	"log"
 	"net"
 	"time"
@@ -36,7 +35,7 @@ func NewTcpClient(token string, conf config.TcpConfig) *Client {
 		},
 		config: conf,
 	}
-	client.Send(common.NewTokenMessage([]byte(token)).Serialize())
+	client.Send(NewTokenMessage([]byte(token)).Serialize())
 	go client.sendLoop()
 	go client.receiveLoop()
 	return client
@@ -48,7 +47,7 @@ func (c *Client) SendMessage(message string) {
 
 func (c *Client) handleMessage(message []byte) {
 	c.remaining = append(c.remaining, message...)
-	m, count := common.NewInternalMessage().Deserialize(c.remaining)
+	m, count := NewInternalMessage().Deserialize(c.remaining)
 	if m != nil {
 		c.handleInternalMessage(m)
 		c.remaining = c.remaining[count:]

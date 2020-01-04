@@ -2,8 +2,10 @@ package conn
 
 import (
 	"errors"
+	"gitlab.com/pangold/goim/codec/protobuf"
 	"gitlab.com/pangold/goim/config"
-	"gitlab.com/pangold/goim/conn/common"
+	"gitlab.com/pangold/goim/conn/codec"
+	"gitlab.com/pangold/goim/conn/pool"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"gitlab.com/pangold/goim/conn/tcp"
 	"gitlab.com/pangold/goim/conn/websocket"
@@ -14,106 +16,99 @@ type Server struct {
 	pool                 interfaces.Pool
 	connectedHandler    *func(string) error
 	disconnectedHandler *func(string)
-	messageHandler      *func([]byte, string) error
-	tokenHandler        *func(string) error
+	messageHandler      *func(*protobuf.Message, string) error
 }
 
-//
 func NewServer(conf config.Config) *Server {
-	c := &Server{ pool: common.NewPool() }
+	s := &Server{ nil, pool.NewPool(), nil, nil, nil }
 	for _, proto := range conf.Protocols {
 		if proto == "tcp" {
-			c.servers = append(c.servers, tcp.NewTcpServer(c.pool, conf.Tcp))
+			s.servers = append(s.servers, tcp.NewTcpServer(s.pool, conf.Tcp))
 		} else if proto == "ws" {
-			c.servers = append(c.servers, websocket.NewWsServer(c.pool, conf.Ws))
+			s.servers = append(s.servers, websocket.NewWsServer(s.pool, conf.Ws))
 		} else if proto == "wss" {
-			c.servers = append(c.servers, websocket.NewWsServer(c.pool, conf.Wss))
+			s.servers = append(s.servers, websocket.NewWsServer(s.pool, conf.Wss))
 		} else {
 			panic("unsupported protocol")
 		}
 	}
-	return c
+	s.pool.SetConnectedHandler(s.handleConnection)
+	s.pool.SetDisconnectedHandler(s.handleDisconnection)
+	return s
 }
 
-// must be invoked before SetConnectedHandler
-func (c *Server) SetMessageHandler(handler func([]byte, string) error) {
-	c.messageHandler = &handler
+func (s *Server) SetMessageHandler(handler func(*protobuf.Message, string) error) {
+	s.messageHandler = &handler
 }
 
-// must be invoked before SetConnectedHandler
-func (c *Server) SetTokenHandler(handler func(string) error) {
-	c.tokenHandler = &handler
+func (s *Server) SetConnectedHandler(handler func(string) error) {
+	s.connectedHandler = &handler
 }
 
-func (c *Server) SetConnectedHandler(handler func(string) error) {
-	// callback from pool is Connection type
-	// callback out from here is string type(token)
-	// that is the difference.
-	c.connectedHandler = &handler
-	c.pool.SetConnectedHandler(c.handleConnection)
+func (s *Server) SetDisconnectedHandler(handler func(string)) {
+	s.disconnectedHandler = &handler
 }
 
-func (c *Server) SetDisconnectedHandler(handler func(string)) {
-	c.disconnectedHandler = &handler
-	c.pool.SetDisconnectedHandler(c.handleDisconnection)
-}
-
-func (c *Server) handleConnection(connection interfaces.Conn) error {
-	token := connection.GetToken()
-	if c.tokenHandler != nil && len(token) > 0 {
-		// check if it is valid token
-		if err := (*c.tokenHandler)(token); err != nil {
+func (s *Server) handleConnection(conn interfaces.Conn) error {
+	token := conn.GetToken()
+	if token == "" {
+		return errors.New("token could not be empty")
+	}
+	if s.connectedHandler != nil {
+		// check token if it is valid
+		if err := (*s.connectedHandler)(token); err != nil {
 			return err
 		}
 	}
-	if len(token) > 0 && c.connectedHandler != nil {
-		if err := (*c.connectedHandler)(token); err != nil {
-			return err
-		}
-	}
-	connection.SetMessageHandler(c.messageHandler)
+	c := codec.NewCodec()
+	c.SetDecodeHandler(s.handleDecode)
+	conn.BindCodec(c)
+	conn.SetMessageHandler(s.handleMessage)
 	return nil
 }
 
 // remember: don't try to call Send or Receive relatives function here,
 // maybe it's been closed. that's a risk.
-func (c *Server) handleDisconnection(connection interfaces.Conn) error {
-	if c.disconnectedHandler != nil {
-		(*c.disconnectedHandler)(connection.GetToken())
+func (s *Server) handleDisconnection(conn interfaces.Conn) error {
+	if s.disconnectedHandler != nil {
+		(*s.disconnectedHandler)(conn.GetToken())
 	}
 	return nil
 }
 
-func (c *Server) Run() {
-	if len(c.servers) == 0 {
-		panic("no protocol is being specified")
-	}
-	for _, server := range c.servers[1:] {
-		go server.Run()
-	}
-	c.servers[0].Run()
+func (s *Server) handleMessage(data []byte, conn interface{}) error {
+	c := conn.(interfaces.Conn)
+	c.GetCodec().(*codec.Codec).Decode(c, data)
+	return nil
 }
 
-func (c *Server) Send(token string, data []byte) error {
-	connections := c.pool.GetConnections()
+func (s *Server) handleDecode(conn interfaces.Conn, msg *protobuf.Message) {
+	// callback message
+	if s.messageHandler != nil {
+		(*s.messageHandler)(msg, conn.GetToken())
+	}
+}
+
+func (s *Server) Send(token string, msg *protobuf.Message) error {
+	connections := s.pool.GetConnections()
 	if conn, ok := (*connections)[token]; ok {
-		conn.Send(data)
+		conn.GetCodec().(*codec.Codec).Send(conn, msg)
 		return nil
 	}
 	return errors.New("error: no such connection, token: " + token)
 }
 
-func (c *Server) Broadcast(data []byte) (result []string) {
-	connections := c.pool.GetConnections()
+func (s *Server) Broadcast(msg *protobuf.Message) (result []string) {
+	connections := s.pool.GetConnections()
 	for token, conn := range *connections {
-		conn.Send(data)
+		conn.GetCodec().(*codec.Codec).Send(conn, msg)
 		result = append(result, token)
 	}
 	return result
 }
 
-func (c *Server) Remove(token string) bool {
-	connections := c.pool.GetConnections()
+func (s *Server) Remove(token string) bool {
+	connections := s.pool.GetConnections()
 	if conn, ok := (*connections)[token]; ok {
 		conn.Stop()
 		return true
@@ -121,8 +116,8 @@ func (c *Server) Remove(token string) bool {
 	return false
 }
 
-func (c *Server) RemoveAll() (result []string) {
-	connections := c.pool.GetConnections()
+func (s *Server) RemoveAll() (result []string) {
+	connections := s.pool.GetConnections()
 	for token, conn := range *connections {
 		result = append(result, token)
 		conn.Stop()
@@ -130,18 +125,28 @@ func (c *Server) RemoveAll() (result []string) {
 	return result
 }
 
-func (c *Server) CheckOnline(token string) bool {
-	connections := c.pool.GetConnections()
+func (s *Server) CheckOnline(token string) bool {
+	connections := s.pool.GetConnections()
 	if _, ok := (*connections)[token]; ok {
 		return true
 	}
 	return false
 }
 
-func (c *Server) GetAll() (result []string) {
-	connections := c.pool.GetConnections()
+func (s *Server) GetAll() (result []string) {
+	connections := s.pool.GetConnections()
 	for token, _ := range *connections {
 		result = append(result, token)
 	}
 	return result
+}
+
+func (s *Server) Run() {
+	if len(s.servers) == 0 {
+		panic("no protocol is being specified")
+	}
+	for _, server := range s.servers[1:] {
+		go server.Run()
+	}
+	s.servers[0].Run()
 }

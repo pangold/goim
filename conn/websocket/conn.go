@@ -9,7 +9,8 @@ import (
 
 type Connection struct {
 	conn            *websocket.Conn
-	messageHandler  *func([]byte, string) error
+	messageHandler   func([]byte, interface{}) error
+	codec            interface{}
 	pool             interfaces.Pool
 	send             chan []byte
 	token            string
@@ -27,7 +28,15 @@ const (
 	maxMessageSize = 512
 )
 
-func (c *Connection) SetMessageHandler(handler *func([]byte, string) error) {
+func (c *Connection) BindCodec(codec interface{}) {
+	c.codec = codec
+}
+
+func (c *Connection) GetCodec() interface{} {
+	return c.codec
+}
+
+func (c *Connection) SetMessageHandler(handler func([]byte, interface{}) error) {
 	c.messageHandler = handler
 }
 
@@ -86,10 +95,8 @@ func (c *Connection) receiveHeartbeat(string) error {
 }
 
 func (c *Connection) dispatchMessage(msg []byte) {
-	if c.messageHandler != nil {
-		if err := (*c.messageHandler)(msg, c.token); err != nil {
-			log.Fatalf("error: unexpected data")
-		}
+	if err := c.messageHandler(msg, c); err != nil {
+		log.Fatalf("error: unexpected data")
 	}
 }
 

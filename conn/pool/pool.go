@@ -1,4 +1,4 @@
-package common
+package pool
 
 import (
 	"gitlab.com/pangold/goim/conn/interfaces"

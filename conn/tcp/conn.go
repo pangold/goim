@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"errors"
-	"gitlab.com/pangold/goim/conn/common"
 	"gitlab.com/pangold/goim/conn/interfaces"
 	"log"
 	"net"
@@ -11,7 +10,8 @@ import (
 
 type Connection struct {
 	conn            net.Conn
-	messageHandler *func([]byte, string) error
+	messageHandler  func([]byte, interface{}) error
+	codec           interface{}
 	pool            interfaces.Pool
 	send            chan []byte
 	token           string
@@ -30,8 +30,15 @@ const (
 	maxMessageSize = 512
 )
 
+func (c *Connection) BindCodec(codec interface{}) {
+	c.codec = codec
+}
 
-func (c *Connection) SetMessageHandler(handler *func([]byte, string) error) {
+func (c *Connection) GetCodec() interface{} {
+	return c.codec
+}
+
+func (c *Connection) SetMessageHandler(handler func([]byte, interface{}) error) {
 	c.messageHandler = handler
 }
 
@@ -71,7 +78,7 @@ func (c *Connection) sendLoop() {
 				return
 			}
 			if !ok {
-				c.conn.Write(common.NewGoodbyeMessage().Serialize())
+				c.conn.Write(NewGoodbyeMessage().Serialize())
 				// log.Printf("tcp connection say goodbye")
 				return
 			}
@@ -80,7 +87,7 @@ func (c *Connection) sendLoop() {
 				return
 			}
 		case <-ticker.C:
-			if _, err := c.conn.Write(common.NewHeartbeatMessage().Serialize()); err != nil {
+			if _, err := c.conn.Write(NewHeartbeatMessage().Serialize()); err != nil {
 				// log.Printf("tcp send hearbeat error: %v", err)
 				return
 			}
@@ -88,14 +95,14 @@ func (c *Connection) sendLoop() {
 	}
 }
 
-func (c *Connection) handleInternalMessage(m *common.InternalMessage) {
+func (c *Connection) handleInternalMessage(m *InternalMessage) {
 	switch m.Kind {
-	case common.HEARTBEAT:
+	case HEARTBEAT:
 		// ReceiveLoop has PongWait detection
 		log.Println("heart beat.")
-	case common.GOODBYE:
+	case GOODBYE:
 		log.Println("client say goodbye")
-	case common.TOKEN:
+	case TOKEN:
 		if c.token == "" {
 			c.token = string(m.Body)
 			c.pool.Register(c)
@@ -108,7 +115,7 @@ func (c *Connection) handleInternalMessage(m *common.InternalMessage) {
 // callback message(normal message)
 func (c *Connection) handleMessage(msg []byte) error {
 	c.remaining = append(c.remaining, msg...)
-	m, count := common.NewInternalMessage().Deserialize(c.remaining)
+	m, count := NewInternalMessage().Deserialize(c.remaining)
 	if m != nil {
 		c.handleInternalMessage(m)
 		c.remaining = c.remaining[count:]
@@ -119,10 +126,8 @@ func (c *Connection) handleMessage(msg []byte) error {
 		return errors.New("unauthorized request")
 	}
 	// message callback handler for invokers
-	if c.messageHandler != nil {
-		if err := (*c.messageHandler)(c.remaining, c.token); err != nil {
-			return errors.New("unexpected data")
-		}
+	if err := c.messageHandler(c.remaining, c); err != nil {
+		return errors.New("unexpected data")
 	}
 	// FIXME: with echo reply, receive loop would not exit.
 	// c.Send(c.remaining) // temp

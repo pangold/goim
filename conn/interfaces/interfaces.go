@@ -2,6 +2,11 @@ package interfaces
 
 // Conn is a generic connection IM connection
 type Conn interface {
+	// Bind a codec,
+	// Don't invoke it if you don't need a codec
+	BindCodec(interface{})
+	// Get bound codec
+	GetCodec() interface{}
 	// Get token of the this connection
 	GetToken() string
 	// Close connection immediately and directly
@@ -16,7 +21,7 @@ type Conn interface {
 	// Parsing it? Wanted to ignore it?
 	// Transferring to others?
 	// Do whatever you wanted to in passing handler.
-	SetMessageHandler(*func([]byte, string) error)
+	SetMessageHandler(func([]byte, interface{}) error)
 }
 
 // Pool is a generic connection pool that manages generic Conn,

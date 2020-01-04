@@ -1,4 +1,4 @@
-package v1
+package codec
 
 import (
 	"github.com/golang/protobuf/proto"
@@ -43,6 +43,8 @@ func TestCodec_1(t *testing.T) {
 		msg2 = msg
 	})
 
+	c.EnableResend(true)
+
 	if err := c.Encode(nil, msg); err != nil {
 		t.Error(err)
 	}
@@ -58,6 +60,7 @@ func TestCodec_1(t *testing.T) {
 	b1 := string(msg.GetBody())
 	b2 := string(msg2.GetBody())
 	if b1 != b2 {
-		t.Errorf("unexpected data, %s : %s", b1, b2)
+		t.Errorf("unexpected data")
+		// t.Errorf("unexpected data, %s : %s", b1, b2)
 	}
 }
