@@ -20,6 +20,7 @@ func NewRouter(front *front.Server, ss *session.Sessions, conf config.HttpConfig
 		router:     gin.Default(),
 		controller: NewController(front, ss),
 	}
+	r.router.Use(filter)
 	basicRouter(r.router, r.controller)
 	return r
 }

@@ -50,7 +50,7 @@ func (c *Controller) Send(ctx *gin.Context) {
 		return
 	}
 	// decode
-	msg := &proto.Message{}
+	msg := &protocol.Message{}
 	if err := proto.Unmarshal(data, msg); err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
@@ -72,7 +72,7 @@ func (c *Controller) Broadcast(ctx *gin.Context) {
 		return
 	}
 	// decode
-	msg := &proto.Message{}
+	msg := &protocol.Message{}
 	if err := proto.Unmarshal(data, msg); err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
