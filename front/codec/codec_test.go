@@ -18,7 +18,7 @@ func TestCodec_1(t *testing.T) {
 		return buf
 	}
 
-	msg := &proto.Message{
+	msg := &protocol.Message{
 		Id:                   proto.Int64(time.Now().UnixNano()),
 		UserId:               proto.String("10001"),
 		TargetId:             proto.String("10002"),

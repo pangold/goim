@@ -12,7 +12,7 @@ import (
 type Codec struct {
 	decoder        *Decoder
 	encoder        *Encoder
-	decodeHandler  func(interfaces.Conn, *proto.Message)
+	decodeHandler  func(interfaces.Conn, *protocol.Message)
 	remaining      []byte
 }
 
@@ -25,7 +25,7 @@ func NewCodec() *Codec {
 	return c
 }
 
-func (c *Codec) SetDecodeHandler(h func(interfaces.Conn, *proto.Message)) {
+func (c *Codec) SetDecodeHandler(h func(interfaces.Conn, *protocol.Message)) {
 	c.decodeHandler = h
 }
 
@@ -33,7 +33,7 @@ func (c *Codec) EnableResend(enable bool) {
 	c.encoder.ResendEnabled = enable
 }
 
-func (c *Codec) Send(conn interfaces.Conn, msg *proto.Message) error {
+func (c *Codec) Send(conn interfaces.Conn, msg *protocol.Message) error {
 	if err := c.encoder.Send(conn, msg); err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (c *Codec) Decode(conn interfaces.Conn, data []byte) {
 		if len(c.remaining) == 0 {
 			break
 		}
-		seg := &proto.Segment{}
+		seg := &protocol.Segment{}
 		if err := proto.Unmarshal(c.remaining, seg); err != nil {
 			//log.Println(err.Error())
 			break
@@ -72,7 +72,7 @@ func (c *Codec) Decode(conn interfaces.Conn, data []byte) {
 }
 
 func (c *Codec) ack(conn interfaces.Conn, id int64) {
-	ack := &proto.Segment{
+	ack := &protocol.Segment{
 		Id:    proto.Int64(id),
 		Index: proto.Int32(0),
 		Total: proto.Int32(1),
@@ -82,6 +82,6 @@ func (c *Codec) ack(conn interfaces.Conn, id int64) {
 	c.encoder.send(conn, ack)
 }
 
-func (c *Codec) handleMessage(conn interfaces.Conn, msg *proto.Message) {
+func (c *Codec) handleMessage(conn interfaces.Conn, msg *protocol.Message) {
 	c.decodeHandler(conn, msg)
 }

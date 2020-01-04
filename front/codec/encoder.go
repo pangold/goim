@@ -21,7 +21,7 @@ type Encoder struct {
 
 type acknowledge struct {
 	id       int64
-	segments []*proto.Segment
+	segments []*protocol.Segment
 	timer    *time.Timer
 	retry    int
 }
@@ -34,7 +34,7 @@ func NewEncoder() *Encoder {
 }
 
 // without ack, segment will be held in acknowledge list
-func (e *Encoder) SetAckSegment(seg *proto.Segment) {
+func (e *Encoder) SetAckSegment(seg *protocol.Segment) {
 	if ack, ok := e.acks[seg.GetId()]; ok && e.ResendEnabled {
 		// being ack, clear
 		// optimize: release by gc, or release immediately yourself
@@ -42,7 +42,7 @@ func (e *Encoder) SetAckSegment(seg *proto.Segment) {
 	}
 }
 
-func (e *Encoder) Send(conn interfaces.Conn, msg *proto.Message) error {
+func (e *Encoder) Send(conn interfaces.Conn, msg *protocol.Message) error {
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return errors.New("split error: " + err.Error())
@@ -52,7 +52,7 @@ func (e *Encoder) Send(conn interfaces.Conn, msg *proto.Message) error {
 	if e.ResendEnabled {
 		ack = &acknowledge{id: msg.GetId(), retry: RETRY_TIMES}
 		e.acks[msg.GetId()] = ack
-		ack.segments = make([]*proto.Segment, pages)
+		ack.segments = make([]*protocol.Segment, pages)
 	}
 	for index := int32(0); index < pages; index++ {
 		seg := e.single(msg.GetId(), index, pages, buf)
@@ -80,8 +80,8 @@ func (e *Encoder) pos(index, pages int32, buf []byte) []byte {
 	return buf[index * MAX_SEGMENT_SIZE : end]
 }
 
-func (e *Encoder) single(id int64, index, pages int32, buf []byte) *proto.Segment {
-	return &proto.Segment{
+func (e *Encoder) single(id int64, index, pages int32, buf []byte) *protocol.Segment {
+	return &protocol.Segment{
 		Id:      &id,
 		Index:   &index,
 		Total:   &pages,
@@ -117,7 +117,7 @@ func (e *Encoder) resend(conn interfaces.Conn, ack *acknowledge) {
 	ack.retry--
 }
 
-func (e *Encoder) send(conn interfaces.Conn, segment *proto.Segment) {
+func (e *Encoder) send(conn interfaces.Conn, segment *protocol.Segment) {
 	if buf, err := proto.Marshal(segment); err == nil {
 		conn.Send(buf)
 	}
