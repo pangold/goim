@@ -2,7 +2,6 @@ package api
 
 import (
 	grpc "gitlab.com/pangold/goim/api/grpc"
-	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/api/http"
 	"gitlab.com/pangold/goim/api/middleware"
 	"gitlab.com/pangold/goim/api/middleware/system"
@@ -65,7 +64,7 @@ func (a *ApiServer) ResetSyncSession(ses middleware.SyncSession) {
 }
 
 func (a *ApiServer) handleConnection(token string) error {
-	return a.sessions.Add(token, func(session *pb.Session) error {
+	return a.sessions.Add(token, func(session *protocol.Session) error {
 		if a.syncSession != nil {
 			a.syncSession.SessionIn(session)
 		}

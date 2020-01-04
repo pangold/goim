@@ -4,7 +4,6 @@ package api
 // Considering the security.
 
 import (
-	pb "gitlab.com/pangold/goim/api/grpc/proto"
 	"gitlab.com/pangold/goim/api/grpc/service"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
@@ -39,8 +38,8 @@ func (s *Server) Run() {
 	}
 	log.Printf("grpc server start running, address: %s", s.config.Address)
 	ss := grpc.NewServer()
-	pb.RegisterImDispatchServiceServer(ss, s.dispatcher)
-	pb.RegisterImApiServiceServer(ss, service.NewImApiService(s.front, s.sessions))
+	protocol.RegisterImDispatchServiceServer(ss, s.dispatcher)
+	protocol.RegisterImApiServiceServer(ss, service.NewImApiService(s.front, s.sessions))
 	//
 	reflection.Register(ss)
 	if err := ss.Serve(listener); err != nil {
@@ -52,10 +51,10 @@ func (s *Server) Dispatch(msg *protocol.Message) {
 	s.dispatcher.PutMessage(msg)
 }
 
-func (s *Server) SessionIn(session *pb.Session) {
+func (s *Server) SessionIn(session *protocol.Session) {
 	s.dispatcher.PutSessionIn(session)
 }
 
-func (s *Server) SessionOut(session *pb.Session) {
+func (s *Server) SessionOut(session *protocol.Session) {
 	s.dispatcher.PutSessionOut(session)
 }

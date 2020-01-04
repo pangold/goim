@@ -1,8 +1,8 @@
 syntax = "proto2";
 
-import "message.proto";
+package protocol;
 
-package api;
+import "message.proto";
 
 service ImApiService {
     rpc GetConnections(Empty) returns (Users) {}
