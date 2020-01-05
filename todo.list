@@ -1,0 +1,13 @@
+1. front/codec: can choose json or protobuf
+2. front: token may change, use middleware
+3. api/session: middleware, do the same to 2
+4. api/http: use json as default
+5. proto syntax = "proto3"
+6. config yaml
+7. mock
+8. api/client
+9. front/client: go api
+10. sdk: c/c++ cross platform api, js api(others platform, access native c/c++ dynamic library)
+11. goimbs: goim backend service -> account & user service
+12. cluster: consul & rpc & proxy / gateway & monitor & log
+13.
