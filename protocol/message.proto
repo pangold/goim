@@ -12,7 +12,7 @@ message Segment {
 
 message Message {
     required int64 id          = 1; // time, nano unix
-    required string userId     = 2; // message from (peer)
+    optional string userId     = 2; // message from (peer)
     optional string targetId   = 3; // message to (peer)
     optional string groupId    = 4; // message to (group)
     optional int32 action      = 5; // CHAT, UPLOAD(UDP:P2P), SYSTEM, FRIEND_REQUESTED, FRIEND_REFUSED, FRIEND_ACCEPTED, GROUP_JOIN_REQUESTED, ...
