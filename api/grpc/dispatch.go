@@ -1,4 +1,4 @@
-package service
+package rpc
 
 import (
 	"gitlab.com/pangold/goim/protocol"

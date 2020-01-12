@@ -1,10 +1,9 @@
-package api
+package rpc
 
 // For backend services
 // Considering the security.
 
 import (
-	"gitlab.com/pangold/goim/api/grpc/service"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/front"
@@ -19,7 +18,7 @@ type Server struct {
 	config      config.GrpcConfig
 	front      *front.Server
 	sessions   *session.Sessions
-	dispatcher *service.ImDispatchService
+	dispatcher *ImDispatchService
 }
 
 func NewServer(front *front.Server, ss *session.Sessions, conf config.GrpcConfig) *Server {
@@ -27,7 +26,7 @@ func NewServer(front *front.Server, ss *session.Sessions, conf config.GrpcConfig
 		config:     conf,
 		front:      front,
 		sessions:   ss,
-		dispatcher: service.NewImDispatchService(),
+		dispatcher: NewImDispatchService(),
 	}
 }
 
@@ -39,7 +38,7 @@ func (s *Server) Run() {
 	log.Printf("grpc server start running, address: %s", s.config.Address)
 	ss := grpc.NewServer()
 	protocol.RegisterImDispatchServiceServer(ss, s.dispatcher)
-	protocol.RegisterImApiServiceServer(ss, service.NewImApiService(s.front, s.sessions))
+	protocol.RegisterImApiServiceServer(ss, NewImApiService(s.front, s.sessions))
 	//
 	reflection.Register(ss)
 	if err := ss.Serve(listener); err != nil {
