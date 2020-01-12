@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package protocol;
+
+import "message.proto";
+import "api.proto";
+
+service ImDispatchService {
+    // push messages that from front server to backend services
+    rpc Dispatch(Empty) returns (stream protocol.Message) {}
+    // only for the cluster,
+    // single node doesn't need to sync session
+    rpc SessionIn(Empty) returns (stream Session) {}
+    rpc SessionOut(Empty) returns (stream Session) {}
+}
+
+message Session {
+    string token    = 1;
+    string userId   = 2;
+    string userName = 3;
+    string clientId = 4;
+    string nodeName = 5;
+}

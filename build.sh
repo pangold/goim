@@ -5,6 +5,7 @@ output=goim
 build_path=build
 api_path=./protocol/api.proto
 message_path=./protocol/message.proto
+dispatch_path=./protocol/dispatch.proto
 
 # check build folder
 check_folder() {
@@ -23,6 +24,10 @@ compile_protobuf_files() {
     echo "compling $2"
     protoc -I $(dirname $1) -I $(dirname $2) --go_out=plugins=grpc:$(dirname $2) $(basename $2)
   fi
+  if [ -e $1 -a -e $3 ]; then
+    echo "compling $3"
+    protoc -I $(dirname $1) -I $(dirname $3) --go_out=plugins=grpc:$(dirname $3) $(basename $3)
+  fi
 }
 
 # compile this go project
@@ -38,7 +43,7 @@ complile_project() {
 
 #
 check_folder
-compile_protobuf_files $message_path $api_path
+compile_protobuf_files $message_path $api_path $dispatch_path
 complile_project $output $1
 
 # docker image

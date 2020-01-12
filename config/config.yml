@@ -18,6 +18,8 @@ back:
     address: 0.0.0.0:10003
   grpc:
     address: 0.0.0.0:10004
+  dispatch:
+    address: 0.0.0.0:10005
 
 token:
   secret-key: my-secret-key

@@ -27,6 +27,7 @@ type FrontConfig struct {
 type BackConfig struct {
 	Http      HostConfig   `yaml:"http"`
 	Grpc      HostConfig   `yaml:"grpc"`
+	Dispatch  HostConfig   `yaml:"dispatch"`
 }
 
 type Config struct {

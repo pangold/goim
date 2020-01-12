@@ -18,7 +18,6 @@ type Server struct {
 	config      config.HostConfig
 	front      *front.Server
 	sessions   *session.Sessions
-	dispatcher *ImDispatchService
 }
 
 func NewServer(front *front.Server, ss *session.Sessions, conf config.HostConfig) *Server {
@@ -26,7 +25,6 @@ func NewServer(front *front.Server, ss *session.Sessions, conf config.HostConfig
 		config:     conf,
 		front:      front,
 		sessions:   ss,
-		dispatcher: NewImDispatchService(),
 	}
 }
 
@@ -35,25 +33,12 @@ func (s *Server) Run() {
 	if err != nil {
 		panic("failed to listen: %s" + err.Error())
 	}
-	log.Printf("grpc server start running, address: %s", s.config.Address)
+	log.Printf("grpc api server start running on %s", s.config.Address)
 	ss := grpc.NewServer()
-	protocol.RegisterImDispatchServiceServer(ss, s.dispatcher)
 	protocol.RegisterImApiServiceServer(ss, NewImApiService(s.front, s.sessions))
 	//
 	reflection.Register(ss)
 	if err := ss.Serve(listener); err != nil {
 		panic("failed to serve" + err.Error())
 	}
-}
-
-func (s *Server) Dispatch(msg *protocol.Message) {
-	s.dispatcher.PutMessage(msg)
-}
-
-func (s *Server) SessionIn(session *protocol.Session) {
-	s.dispatcher.PutSessionIn(session)
-}
-
-func (s *Server) SessionOut(session *protocol.Session) {
-	s.dispatcher.PutSessionOut(session)
 }
