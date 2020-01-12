@@ -37,14 +37,12 @@ func NewApiServer(conf config.Config) *ApiServer {
 	// Grpc api, designs for cluster
 	api.grpcServer = grpc.NewServer(api.front, api.sessions, conf.Back.Grpc)
 	// Default middleware for dispatching message/session
-	dispatcher := system.NewDispatchServer(conf.Back.Dispatch)
+	chat := system.NewChatService(api.front, api.sessions)
 	// Default
-	// We use grpc to dispatch received message to backend services.
-	// You can also custom your own middleware to dispatch message to:
-	// Your own service, MQ / Redis / DB, ignore them, or others
-	api.dispatcher = dispatcher
+	// api.dispatcher = dispatcher
+	api.dispatcher = chat
 	// Default
-	api.syncSession = dispatcher
+	// api.syncSession = dispatcher
 	//
 	return api
 }
