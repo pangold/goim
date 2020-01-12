@@ -1,78 +1,76 @@
 package session
 
-// A local session pool for current node.
-
 import (
 	"fmt"
+	"gitlab.com/pangold/goim/api/middleware"
 	"gitlab.com/pangold/goim/protocol"
-	"gitlab.com/pangold/goim/utils"
 	"log"
 )
 
 type Sessions struct {
+	token middleware.Token
 	sessions map[string]*protocol.Session
 }
 
-func NewSession(token string) *protocol.Session {
-	s := &protocol.Session{
-		Token:    token,
-	}
-	if err := utils.ExplainJwt(token, &s.ClientId, &s.UserId, &s.UserName); err != nil {
-		return nil
-	}
-	return s
-}
-
-func NewSessions() *Sessions {
+func NewSessions(token middleware.Token) *Sessions {
 	return &Sessions {
+		token: token,
 		sessions: make(map[string]*protocol.Session),
 	}
 }
 
-func (sp *Sessions) Add(token string, filter func(*protocol.Session)error) error {
-	s := NewSession(token)
+func (this *Sessions) GetToken() middleware.Token {
+	return this.token
+}
+
+func (this *Sessions) ResetTokenExplainer(token middleware.Token) {
+	this.token = token
+}
+
+func (this *Sessions) Add(token string, filter func(*protocol.Session)error) error {
+	s := this.token.ExplainToken(token)
 	if s == nil {
 		return fmt.Errorf("invalid token: %s", token)
 	}
 	if err := filter(s); err != nil {
 		return err
 	}
-	log.Printf("new connection: cid = %s, uid = %s, name = %s", s.GetClientId(), s.GetUserId(), s.GetUserName())
-	sp.sessions[s.GetUserId()] = s
+	log.Printf("new connection: cid = %s, uid = %s, name = %s", s.ClientId, s.UserId, s.UserName)
+	this.sessions[s.UserId] = s
 	return nil
 }
 
-func (sp *Sessions) Remove(token string) *protocol.Session {
+func (this *Sessions) Remove(token string) *protocol.Session {
 	log.Printf("disconnection: token %s", token)
-	tmp := NewSession(token)
-	_, ok := sp.sessions[tmp.GetUserId()]
-	if ok {
-		delete(sp.sessions, token)
+	tmp := this.token.ExplainToken(token)
+	if _, ok := this.sessions[tmp.UserId]; ok {
+		delete(this.sessions, token)
 	}
 	return tmp
 }
 
-func (sp *Sessions) Clear() {
-	sp.sessions = nil
+func (this *Sessions) Clear() {
+	// FIXME: manually
+	this.sessions = nil
 }
 
-func (sp *Sessions) GetTokenByUserId(uid string) string {
-	if s, ok := sp.sessions[uid]; ok {
-		return s.GetToken()
+func (this *Sessions) GetTokenByUserId(uid string) string {
+	if s, ok := this.sessions[uid]; ok {
+		return s.Token
 	}
 	return ""
 }
 
-func (sp *Sessions) GetUserIds() (res []string) {
-	for _, s := range sp.sessions {
-		res = append(res, s.GetUserId())
+func (this *Sessions) GetUserIds() (res []string) {
+	for _, s := range this.sessions {
+		res = append(res, s.UserId)
 	}
 	return res
 }
 
-func (sp *Sessions) GetTokens() (res []string) {
-	for _, s := range sp.sessions {
-		res = append(res, s.GetToken())
+func (this *Sessions) GetTokens() (res []string) {
+	for _, s := range this.sessions {
+		res = append(res, s.Token)
 	}
 	return res
 }

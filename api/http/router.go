@@ -12,6 +12,7 @@ type Router struct {
 	config      config.HttpConfig
 	router     *gin.Engine
 	controller *Controller
+	filter     *Filter
 }
 
 func NewRouter(front *front.Server, ss *session.Sessions, conf config.HttpConfig) *Router {
@@ -19,8 +20,9 @@ func NewRouter(front *front.Server, ss *session.Sessions, conf config.HttpConfig
 		config:     conf,
 		router:     gin.Default(),
 		controller: NewController(front, ss),
+		filter:     NewFilter(ss.GetToken()),
 	}
-	r.router.Use(filter)
+	r.router.Use(r.filter.Do)
 	basicRouter(r.router, r.controller)
 	return r
 }
@@ -40,19 +42,3 @@ func basicRouter(router *gin.Engine, basic *Controller) {
 	b.POST("/online", basic.Online)
 	b.POST("/kick", basic.Kick)
 }
-
-//func friendRouter(router *gin.Engine, friend *controller.Friend) {
-//	f := router.Group("/api/friend")
-//	f.GET ("/", friend.List)
-//	f.POST("/make", friend.Make)
-//	f.POST("/accept", friend.Accept)
-//	f.POST("/reject", friend.Reject)
-//	f.POST("/breakup", friend.Breakup)
-//	f.POST("/recommend", friend.Recommend)
-//}
-//
-//func groupRouter(router *gin.Engine, group *controller.Group) {
-//	g := router.Group("/api/group")
-//	g.GET ("/", group.List)
-//	g.POST("/create", group.Create)
-//}

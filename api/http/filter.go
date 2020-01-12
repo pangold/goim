@@ -2,18 +2,25 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.com/pangold/goim/utils"
+	"gitlab.com/pangold/goim/api/middleware"
 	"net/http"
 )
 
-func filter(ctx *gin.Context) {
-	// check token
+type Filter struct {
+	token middleware.Token
+}
+
+func NewFilter(token middleware.Token) *Filter {
+	return &Filter {
+		token: token,
+	}
+}
+
+func (this *Filter) Do(ctx *gin.Context) {
 	token := ctx.GetHeader("token")
-	var cid, uid, uname string
-	if err := utils.ExplainJwt(token, &cid, &uid, &uname); err != nil {
+	if this.token.ExplainToken(token) == nil {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	// TODO: check permission
 	ctx.Next()
 }

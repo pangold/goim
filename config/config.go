@@ -19,6 +19,10 @@ type GrpcConfig struct {
 	Address   string
 }
 
+type Token struct {
+	SecretKey string
+}
+
 type Config struct {
 	Protocols []string    // support multi protocols
 	// For frontend server/client
@@ -28,6 +32,7 @@ type Config struct {
 	// For backend server
 	Http      HttpConfig
 	Grpc      GrpcConfig
+	Token     Token
 }
 
 var (
@@ -55,6 +60,9 @@ func init() {
 		},
 		Grpc: GrpcConfig{
 			Address:  "0.0.0.0:10004",
+		},
+		Token: Token{
+			SecretKey:"my-secret-key",
 		},
 	}
 }

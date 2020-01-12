@@ -23,7 +23,7 @@ type ApiServer struct {
 func NewApiServer(conf config.Config) *ApiServer {
 	api := &ApiServer{
 		front: front.NewServer(conf),
-		sessions: session.NewSessions(),
+		sessions: session.NewSessions(system.NewToken(conf.Token.SecretKey)),
 	}
 	// handle new coming connection
 	api.front.SetConnectedHandler(api.handleConnection)
@@ -37,15 +37,15 @@ func NewApiServer(conf config.Config) *ApiServer {
 	// Grpc api, designs for cluster
 	api.grpcServer = grpc.NewServer(api.front, api.sessions, conf.Grpc)
 	// Default middleware for dispatching message/session
-	sm := system.NewSystemMiddleware(api.grpcServer)
+	sync := system.NewSync(api.grpcServer)
 	// Default
 	// We use grpc to dispatch received message to backend services.
 	// You can also custom your own middleware to dispatch message to:
 	// Your own service, MQ / Redis / DB, ignore them, or others
-	api.dispatcher = sm
+	api.dispatcher = sync
 	// Default
-	// We just ignore session synchronization
-	// api.syncSession = sm
+	api.syncSession = sync
+	//
 	return api
 }
 
@@ -61,6 +61,10 @@ func (a *ApiServer) ResetDispatcher(dis middleware.Dispatcher) {
 
 func (a *ApiServer) ResetSyncSession(ses middleware.SyncSession) {
 	a.syncSession = ses
+}
+
+func (a *ApiServer) ResetToken(token middleware.Token) {
+	a.sessions.ResetTokenExplainer(token)
 }
 
 func (a *ApiServer) handleConnection(token string) error {
