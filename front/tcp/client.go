@@ -10,10 +10,10 @@ import (
 
 type Client struct {
 	Connection
-	config config.TcpConfig
+	config config.HostConfig
 }
 
-func newTcpConnection(conf config.TcpConfig) net.Conn {
+func newTcpConnection(conf config.HostConfig) net.Conn {
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", conf.Address)
 	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
@@ -23,7 +23,7 @@ func newTcpConnection(conf config.TcpConfig) net.Conn {
 	return conn
 }
 
-func NewTcpClient(token string, conf config.TcpConfig) *Client {
+func NewTcpClient(token string, conf config.HostConfig) *Client {
 	client := &Client {
 		Connection: Connection {
 			conn:      newTcpConnection(conf),

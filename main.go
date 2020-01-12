@@ -8,6 +8,7 @@ import (
 
 func main() {
 	log.Println("IM service start running ...")
-	s := api.NewApiServer(config.Conf)
+	conf := config.NewYaml("config/config.yml").ReadConfig()
+	s := api.NewApiServer(*conf)
 	s.Run()
 }

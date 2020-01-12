@@ -13,7 +13,7 @@ type Server struct {
 	router *Router
 }
 
-func NewServer(front *front.Server, ss *session.Sessions, conf config.HttpConfig) *Server {
+func NewServer(front *front.Server, ss *session.Sessions, conf config.HostConfig) *Server {
 	return &Server{
 		router: NewRouter(front, ss, conf),
 	}

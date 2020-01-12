@@ -6,6 +6,6 @@ import (
 )
 
 func TestServer_Run(t *testing.T) {
-	s := NewWsServer(config.Conf.Ws)
+	s := NewWsServer(nil, config.Conf.Front.Ws)
 	s.Run()
 }

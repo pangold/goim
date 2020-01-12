@@ -9,13 +9,13 @@ import (
 )
 
 type Router struct {
-	config      config.HttpConfig
+	config      config.HostConfig
 	router     *gin.Engine
 	controller *Controller
 	filter     *Filter
 }
 
-func NewRouter(front *front.Server, ss *session.Sessions, conf config.HttpConfig) *Router {
+func NewRouter(front *front.Server, ss *session.Sessions, conf config.HostConfig) *Router {
 	r := &Router{
 		config:     conf,
 		router:     gin.Default(),

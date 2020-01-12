@@ -19,7 +19,7 @@ type Server struct {
 	messageHandler      *func(*protocol.Message, string) error
 }
 
-func NewServer(conf config.Config) *Server {
+func NewServer(conf config.FrontConfig) *Server {
 	s := &Server{ nil, pool.NewPool(), nil, nil, nil }
 	for _, proto := range conf.Protocols {
 		if proto == "tcp" {

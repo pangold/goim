@@ -22,7 +22,7 @@ type ApiServer struct {
 
 func NewApiServer(conf config.Config) *ApiServer {
 	api := &ApiServer{
-		front: front.NewServer(conf),
+		front: front.NewServer(conf.Front),
 		sessions: session.NewSessions(system.NewToken(conf.Token.SecretKey)),
 	}
 	// handle new coming connection
@@ -33,9 +33,9 @@ func NewApiServer(conf config.Config) *ApiServer {
 	// to chat with others.
 	api.front.SetMessageHandler(api.handleMessage)
 	// Http api, designs for single node
-	api.httpServer = http.NewServer(api.front, api.sessions, conf.Http)
+	api.httpServer = http.NewServer(api.front, api.sessions, conf.Back.Http)
 	// Grpc api, designs for cluster
-	api.grpcServer = grpc.NewServer(api.front, api.sessions, conf.Grpc)
+	api.grpcServer = grpc.NewServer(api.front, api.sessions, conf.Back.Grpc)
 	// Default middleware for dispatching message/session
 	sync := system.NewSync(api.grpcServer)
 	// Default

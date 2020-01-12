@@ -15,13 +15,13 @@ import (
 )
 
 type Server struct {
-	config      config.GrpcConfig
+	config      config.HostConfig
 	front      *front.Server
 	sessions   *session.Sessions
 	dispatcher *ImDispatchService
 }
 
-func NewServer(front *front.Server, ss *session.Sessions, conf config.GrpcConfig) *Server {
+func NewServer(front *front.Server, ss *session.Sessions, conf config.HostConfig) *Server {
 	return &Server{
 		config:     conf,
 		front:      front,

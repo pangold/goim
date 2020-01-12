@@ -17,7 +17,7 @@ type Client struct {
 	ImDispatcher protocol.ImDispatchServiceClient
 }
 
-func NewClient(conf config.GrpcConfig) *Client {
+func NewClient(conf config.HostConfig) *Client {
 	conn, err := grpc.Dial(conf.Address, grpc.WithInsecure())
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect: %v", err))

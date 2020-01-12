@@ -1,0 +1,23 @@
+front:
+  protocols:
+    - ws
+    - tcp
+  ws:
+    protocol: ws
+    address: 0.0.0.0:10000
+  wss:
+    protocol: wss
+    address: 0.0.0.0:10001
+    cert: xx
+    key: xx
+  tcp:
+    address: 0.0.0.0:10002
+
+back:
+  http:
+    address: 0.0.0.0:10003
+  grpc:
+    address: 0.0.0.0:10004
+
+token:
+  secret-key: my-secret-key

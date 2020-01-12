@@ -9,11 +9,11 @@ import (
 )
 
 type Server struct {
-	config               config.TcpConfig
+	config               config.HostConfig
 	pool                 interfaces.Pool
 }
 
-func NewTcpServer(p interfaces.Pool, c config.TcpConfig) *Server {
+func NewTcpServer(p interfaces.Pool, c config.HostConfig) *Server {
 	return &Server{
 		config: c,
 		pool:   p,
