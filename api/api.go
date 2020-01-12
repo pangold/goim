@@ -1,10 +1,10 @@
 package api
 
 import (
+	"gitlab.com/pangold/goim/api/business"
+	"gitlab.com/pangold/goim/api/business/system"
 	grpc "gitlab.com/pangold/goim/api/grpc"
 	"gitlab.com/pangold/goim/api/http"
-	"gitlab.com/pangold/goim/api/middleware"
-	"gitlab.com/pangold/goim/api/middleware/system"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/config"
 	"gitlab.com/pangold/goim/front"
@@ -16,8 +16,8 @@ type ApiServer struct {
 	grpcServer  *grpc.Server
 	httpServer  *http.Server
 	sessions    *session.Sessions
-	syncSession  middleware.SyncSession
-	dispatcher   middleware.Dispatcher
+	syncSession business.SyncSession
+	dispatcher  business.Dispatcher
 }
 
 func NewApiServer(conf config.Config) *ApiServer {
@@ -55,15 +55,15 @@ func (a *ApiServer) Run() {
 	a.front.Run()
 }
 
-func (a *ApiServer) ResetDispatcher(dis middleware.Dispatcher) {
+func (a *ApiServer) ResetDispatcher(dis business.Dispatcher) {
 	a.dispatcher = dis
 }
 
-func (a *ApiServer) ResetSyncSession(ses middleware.SyncSession) {
+func (a *ApiServer) ResetSyncSession(ses business.SyncSession) {
 	a.syncSession = ses
 }
 
-func (a *ApiServer) ResetToken(token middleware.Token) {
+func (a *ApiServer) ResetToken(token business.Token) {
 	a.sessions.ResetTokenExplainer(token)
 }
 

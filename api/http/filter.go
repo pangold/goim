@@ -2,15 +2,15 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.com/pangold/goim/api/middleware"
+	"gitlab.com/pangold/goim/api/business"
 	"net/http"
 )
 
 type Filter struct {
-	token middleware.Token
+	token business.Token
 }
 
-func NewFilter(token middleware.Token) *Filter {
+func NewFilter(token business.Token) *Filter {
 	return &Filter {
 		token: token,
 	}

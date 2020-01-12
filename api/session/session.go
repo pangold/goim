@@ -2,28 +2,28 @@ package session
 
 import (
 	"fmt"
-	"gitlab.com/pangold/goim/api/middleware"
+	"gitlab.com/pangold/goim/api/business"
 	"gitlab.com/pangold/goim/protocol"
 	"log"
 )
 
 type Sessions struct {
-	token middleware.Token
+	token    business.Token
 	sessions map[string]*protocol.Session
 }
 
-func NewSessions(token middleware.Token) *Sessions {
+func NewSessions(token business.Token) *Sessions {
 	return &Sessions {
 		token: token,
 		sessions: make(map[string]*protocol.Session),
 	}
 }
 
-func (this *Sessions) GetToken() middleware.Token {
+func (this *Sessions) GetToken() business.Token {
 	return this.token
 }
 
-func (this *Sessions) ResetTokenExplainer(token middleware.Token) {
+func (this *Sessions) ResetTokenExplainer(token business.Token) {
 	this.token = token
 }
 

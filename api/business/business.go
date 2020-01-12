@@ -1,4 +1,4 @@
-package middleware
+package business
 
 import (
 	"gitlab.com/pangold/goim/protocol"
