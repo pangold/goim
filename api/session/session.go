@@ -4,7 +4,6 @@ package session
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"gitlab.com/pangold/goim/protocol"
 	"gitlab.com/pangold/goim/utils"
 	"log"
@@ -16,13 +15,9 @@ type Sessions struct {
 
 func NewSession(token string) *protocol.Session {
 	s := &protocol.Session{
-		Token:   &token,
-		UserId:   proto.String(""),
-		UserName: proto.String(""),
-		ClientId: proto.String(""),
-		NodeName: proto.String(""),
+		Token:    token,
 	}
-	if err := utils.ExplainJwt(token, s.ClientId, s.UserId, s.UserName); err != nil {
+	if err := utils.ExplainJwt(token, &s.ClientId, &s.UserId, &s.UserName); err != nil {
 		return nil
 	}
 	return s

@@ -35,13 +35,13 @@ func NewClient(conf config.GrpcConfig) *Client {
 func (c *Client) Send(uid, tid, gid string, action, t, ack int32, body []byte) bool {
 	id := time.Now().UnixNano()
 	msg := &protocol.Message{
-		Id:                   &id,
-		UserId:               &uid,
-		TargetId:             &tid,
-		GroupId:              &gid,
-		Action:               &action,
-		Ack:                  &t,
-		Type:                 &ack,
+		Id:                   id,
+		UserId:               uid,
+		TargetId:             tid,
+		GroupId:              gid,
+		Action:               action,
+		Ack:                  t,
+		Type:                 ack,
 		Body:                 body,
 	}
 	cli, _ := c.ImApi.Send(context.Background())
@@ -55,10 +55,10 @@ func (c *Client) Send(uid, tid, gid string, action, t, ack int32, body []byte) b
 func (c *Client) Broadcast(action, t, ack int32, body []byte) bool {
 	id := time.Now().UnixNano()
 	msg := &protocol.Message{
-		Id:                   &id,
-		Action:               &action,
-		Ack:                  &t,
-		Type:                 &ack,
+		Id:                   id,
+		Action:               action,
+		Ack:                  t,
+		Type:                 ack,
 		Body:                 body,
 	}
 	cli, _ := c.ImApi.Broadcast(context.Background())
@@ -79,7 +79,7 @@ func (c *Client) GetConnections() []string {
 }
 
 func (c *Client) Online(uid string) bool {
-	res, err := c.ImApi.Online(c.context, &protocol.User{UserId: &uid})
+	res, err := c.ImApi.Online(c.context, &protocol.User{UserId: uid})
 	if err != nil {
 		log.Printf("failed to get online users(%s), error: %v", uid, err)
 		return false
@@ -88,7 +88,7 @@ func (c *Client) Online(uid string) bool {
 }
 
 func (c *Client) Kick(uid string) bool {
-	res, err := c.ImApi.Kick(c.context, &protocol.User{UserId: &uid})
+	res, err := c.ImApi.Kick(c.context, &protocol.User{UserId: uid})
 	if err != nil {
 		log.Printf("failed to kick user(%s), error: %v", uid, err)
 		return false

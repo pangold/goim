@@ -1,4 +1,4 @@
-syntax = "proto2";
+syntax = "proto3";
 
 package protocol;
 
@@ -26,7 +26,7 @@ message Empty {
 }
 
 message User {
-    required string userId  = 1;
+    string userId  = 1;
 }
 
 message Users {
@@ -34,13 +34,13 @@ message Users {
 }
 
 message Session {
-    required string token    = 1;
-    optional string userId   = 2;
-    optional string userName = 3;
-    optional string clientId = 4;
-    optional string nodeName = 5;
+    string token    = 1;
+    string userId   = 2;
+    string userName = 3;
+    string clientId = 4;
+    string nodeName = 5;
 }
 
 message Result {
-    required bool success   = 1;
+    bool success   = 1;
 }

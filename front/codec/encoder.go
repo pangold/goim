@@ -82,10 +82,10 @@ func (e *Encoder) pos(index, pages int32, buf []byte) []byte {
 
 func (e *Encoder) single(id int64, index, pages int32, buf []byte) *protocol.Segment {
 	return &protocol.Segment{
-		Id:      &id,
-		Index:   &index,
-		Total:   &pages,
-		Ack:     proto.Int32(0),
+		Id:      id,
+		Index:   index,
+		Total:   pages,
+		Ack:     0,
 		Body:    e.pos(index, pages, buf),
 	}
 }

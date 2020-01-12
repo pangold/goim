@@ -73,10 +73,10 @@ func (c *Codec) Decode(conn interfaces.Conn, data []byte) {
 
 func (c *Codec) ack(conn interfaces.Conn, id int64) {
 	ack := &protocol.Segment{
-		Id:    proto.Int64(id),
-		Index: proto.Int32(0),
-		Total: proto.Int32(1),
-		Ack:   proto.Int32(1),
+		Id:    id,
+		Index: 0,
+		Total: 1,
+		Ack:   1,
 		Body:  nil,
 	}
 	c.encoder.send(conn, ack)

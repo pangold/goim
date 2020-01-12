@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"gitlab.com/pangold/goim/api/session"
 	"gitlab.com/pangold/goim/front"
 	"gitlab.com/pangold/goim/protocol"
@@ -75,7 +74,7 @@ func (c *ImApiService) Online(ctx context.Context, req *protocol.User) (*protoco
 		return nil, errors.New("uid could not be null")
 	}
 	token := c.sessions.GetTokenByUserId(req.GetUserId())
-	return &protocol.Result{Success: proto.Bool(token != "")}, nil
+	return &protocol.Result{Success: token != ""}, nil
 }
 
 func (c *ImApiService) Kick(ctx context.Context, req *protocol.User) (*protocol.Result, error) {
@@ -87,5 +86,5 @@ func (c *ImApiService) Kick(ctx context.Context, req *protocol.User) (*protocol.
 		return nil, fmt.Errorf("uid(%s) is not online", req.GetUserId())
 	}
 	c.front.Remove(token)
-	return &protocol.Result{Success: proto.Bool(true)}, nil
+	return &protocol.Result{Success: true}, nil
 }
